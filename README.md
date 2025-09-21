@@ -4,14 +4,14 @@
 Este projeto documenta as camadas de dados **Bronze** e **Silver** de um pipeline sobre voos atrasados nos Estados Unidos em 2015.
 O objetivo é organizar, tratar e disponibilizar os dados de forma confiável, garantindo a rastreabilidade das transformações realizadas.
 
----
+--
 
 ##  Estrutura do Repositório
 - `README.md`: documentação geral e dicionário de dados.  
 - `bronze/`: camada de dados brutos (dados originais, sem tratamento).  
 - `silver/`: camada de dados tratados e enriquecidos (com atributos integrados e padronizados).  
 
----
+--
 
 ## Camada Bronze
 
@@ -28,9 +28,9 @@ A **camada Bronze** contém os dados originais (raw), preservando sua granularid
 - FLIGHT – decola – AIRPORT (1:N)  
 - FLIGHT – aterrissa – AIRPORT (1:N)  
 
----
+--
 
-### 📑 Dicionário de Dados – Bronze
+### Dicionário de Dados – Bronze
 
 #### **Tabela: FLIGHT**
 | Coluna                | Tipo        | Descrição                                                                  |
@@ -67,7 +67,7 @@ A **camada Bronze** contém os dados originais (raw), preservando sua granularid
 | late_aircraft_delay    | Inteiro     | Atraso causado por chegada tardia de outra aeronave (minutos).            |
 | weather_delay          | Inteiro     | Atraso devido ao clima (minutos).                                         |
 
----
+--
 
 #### **Tabela: AIRLINE**
 | Coluna     | Tipo  | Descrição                        |
@@ -75,7 +75,7 @@ A **camada Bronze** contém os dados originais (raw), preservando sua granularid
 | iata_code  | Texto | Código IATA da companhia aérea.  |
 | airline    | Texto | Nome da companhia aérea.         |
 
----
+--
 
 #### **Tabela: AIRPORT**
 | Coluna     | Tipo  | Descrição                                |
@@ -88,7 +88,7 @@ A **camada Bronze** contém os dados originais (raw), preservando sua granularid
 | latitude   | Real  | Latitude geográfica.                     |
 | longitude  | Real  | Longitude geográfica.                    |
 
----
+--
 
 ## Camada Silver
 
@@ -100,9 +100,9 @@ Foram removidos atributos irrelevantes ou redundantes e criado um identificador 
 **Entidades**  
 - FLIGHT (única consolidada)  
 
----
+--
 
-### 📑 Dicionário de Dados – Silver
+### Dicionário de Dados – Silver
 
 #### **Tabela: FLIGHT**
 | Coluna                        | Tipo     | Descrição                                                                 |
@@ -141,7 +141,7 @@ Foram removidos atributos irrelevantes ou redundantes e criado um identificador 
 | late_aircraft_delay           | Inteiro  | Atraso causado por chegada tardia de outra aeronave (minutos).            |
 | weather_delay                 | Inteiro  | Atraso devido ao clima (minutos).                                         |
 
----
+--
 
-## 📌 Histórico de Versões
-- **v1.0 (21/09/2025)**: Criação inicial do README com dicionário de dados da Bronze e Silver.
+## Histórico de Versões
+- **v1.0 (21/09/2025)**: Criação inicial do README com dicionário de dados.
