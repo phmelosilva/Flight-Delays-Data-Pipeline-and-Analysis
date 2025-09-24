@@ -1,13 +1,14 @@
 # Dicionário de Dados: Voos Atrasados em 2015
 
 ## Sobre o Projeto
-Este projeto documenta as camadas de dados **Bronze** e **Silver** de um pipeline sobre voos atrasados nos Estados Unidos em 2015.
+Este projeto utiliza de um pipeline sobre voos atrasados e cancelados nos Estados Unidos do ano 2015. Para isso, o projeto desenvolve e documenta as camadas de dados **Bronze**, **Silver** e **Gold** da arquitetura **Medallion**/Medalhão em um **Data Lakehouse**.
 O objetivo é organizar, tratar e disponibilizar os dados de forma confiável, garantindo a rastreabilidade das transformações realizadas.
 
 ##  Estrutura do Repositório
 - `README.md`: documentação geral e dicionário de dados.  
 - `bronze/`: camada de dados brutos (dados originais, sem tratamento).  
 - `silver/`: camada de dados tratados e enriquecidos (com atributos integrados e padronizados).  
+- `gold/`: camada de dados organizados, agregados e prontos para serem consumidos (contém modelos dimensionais com fatos e dimensões).
 
 ## Camada Bronze
 
@@ -27,7 +28,7 @@ A **camada Bronze** contém os dados originais (raw), preservando sua granularid
 ### Dicionário de Dados – Bronze
 
 #### **Tabela: FLIGHT**
-| Coluna            b    | Tipo        | Descrição                                                                 |
+| Coluna                 | Tipo        | Descrição                                                                 |
 |------------------------|-------------|---------------------------------------------------------------------------|
 | year                   | int         | Ano do voo.                                                               |
 | month                  | int         | Mês do voo (1 a 12).                                                      |
@@ -127,5 +128,15 @@ Foram removidos atributos irrelevantes ou redundantes e criado um identificador 
 | late_aircraft_delay           | int      | Atraso causado por chegada tardia de outra aeronave (minutos).            |
 | weather_delay                 | int      | Atraso devido ao clima (minutos).                                         |
 
+## Camada Gold
+
+Na **camada Gold**, os dados já limpos e padronizados da camada Silver são agregados e modelados em estruturas otimizadas para o consumo final.
+É aqui que os dados são transformados em **Data Warehouses** focados em áreas de negócio específicas, prontos para serem utilizados em análises, relatórios e dashboards. A principal característica desta camada é a otimização para leitura e performance analítica.
+
 ## Histórico de Versões
-- **v1.0 (21/09/2025)**: Criação inicial do README com dicionário de dados.
+
+| Data       | Versão | Atividade                                          | Responsável          |
+| ---------- | ------ | -------------------------------------------------- | -------------------- |
+| 21/09/2025 | 1.0    | Criação inicial do README com dicionário de dados. | Júlia Takaki         |
+| 24/09/2025 | 1.0    | Ajustes no README com explicação sobre camada Gold | Pedro Henrique       |
+
