@@ -1,0 +1,4 @@
+Bronze/*.csv
+
+__pycache__/
+.env
