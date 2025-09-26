@@ -1,4 +1,5 @@
-/.env
+.env
 /dbdata
 /airflow/logs
 /airflow/config
+__pycache__/

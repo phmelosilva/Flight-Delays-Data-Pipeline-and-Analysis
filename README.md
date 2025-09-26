@@ -1,142 +1,151 @@
-# Dicionário de Dados: Voos Atrasados em 2015
+# Flight Delays Data Pipeline and Analysis
 
-## Sobre o Projeto
-Este projeto utiliza de um pipeline sobre voos atrasados e cancelados nos Estados Unidos do ano 2015. Para isso, o projeto desenvolve e documenta as camadas de dados **Bronze**, **Silver** e **Gold** da arquitetura **Medallion**/Medalhão em um **Data Lakehouse**.
-O objetivo é organizar, tratar e disponibilizar os dados de forma confiável, garantindo a rastreabilidade das transformações realizadas.
+Este é um projeto completo de engenharia de dados para a disciplina de **Sistemas de Bancos de Dados 2** que demonstra a construção de um pipeline de ponta a ponta, desde a ingestão de dados brutos até a disponibilização de insights por meio de ferramentas de BI. Utilizando [dados de voos de 2015 nos EUA](https://www.kaggle.com/datasets/usdot/flight-delays), o projeto implementa a **Arquitetura Medallion** (_Bronze_, _Silver_ e _Gold_) para processar, limpar e agregar os dados de forma incremental e confiável em um **Data Lake**.
 
-##  Estrutura do Repositório
-- `README.md`: documentação geral e dicionário de dados.  
-- `bronze/`: camada de dados brutos (dados originais, sem tratamento).  
-- `silver/`: camada de dados tratados e enriquecidos (com atributos integrados e padronizados).  
-- `gold/`: camada de dados organizados, agregados e prontos para serem consumidos (contém modelos dimensionais com fatos e dimensões).
+O principal objetivo é criar um Data Lake robusto e automatizado, onde cada etapa do processo é orquestrada, testável e reprodutível, entregando dados de alta qualidade para consumo por ferramentas de **Business Intelligence**.
 
-## Camada Bronze
+---
 
-A **camada Bronze** contém os dados originais (raw), preservando sua granularidade.
+## Tecnologias utilizadas
 
-### Modelo Entidade-Relacionamento (ME-R)
-**Entidades**  
-- FLIGHT  
-- AIRLINE  
-- AIRPORT  
+- **Orquestração:** Apache Airflow;
+- **Conteinerização:** Docker & Docker Compose;
+- **Banco de Dados (Metadados do Airflow e Data Warehouse):** PostgreSQL 16;
+- **Análise e Processamento de Dados:** Matplotlib, Pandas, PySpark, Seaborn e Scikit-learn;
+- **Visualização:** Microsoft PowerBI e Tableau (Provisórios);
+- **Linguagens:** Python, SQL & Bash.
 
-**Relacionamentos**  
-- AIRLINE – realiza – FLIGHT (N:1)  
-- FLIGHT – decola – AIRPORT (1:N)  
-- FLIGHT – aterrissa – AIRPORT (1:N)  
+## Estrutura do projeto
 
-### Dicionário de Dados – Bronze
+```
+.
+├── .env.example
+├── .gitignore
+├── Dockerfile
+├── docker-compose.yaml
+├── README.md
+├── requirements.txt
+├── setup.py
+│
+├── airflow
+│   ├── config
+│   ├── dags
+│   │   ├── ingestion
+│   │   ├── modeling
+│   │   ├── setup
+│   │   ├── stage
+│   │   └── transformation
+│   ├── logs
+│   └── plugins
+│
+├── datalake
+│   ├── stage
+│   ├── bronze
+│   ├── silver
+│   └── gold
+│
+├── docs
+│   └── data_dictionary
+│       ├── bronze
+│       ├── silver
+│       └── gold
+│
+├── notebooks
+│   ├── bronze_analysis
+│   └── silver_analysis
+│
+├── pipelines
+│   ├── ingestion
+│   ├── modeling
+│   ├── setup
+│   ├── stage
+│   └── transformation
+│
+└── tests
+```
 
-#### **Tabela: FLIGHT**
-| Coluna                 | Tipo        | Descrição                                                                 |
-|------------------------|-------------|---------------------------------------------------------------------------|
-| year                   | int         | Ano do voo.                                                               |
-| month                  | int         | Mês do voo (1 a 12).                                                      |
-| day                    | int         | Dia do mês.                                                               |
-| day_of_week            | int         | Dia da semana (1=Segunda, 7=Domingo).                                     |
-| airline                | varchar     | Código da companhia aérea (IATA).                                         |
-| flight_number          | varchar     | Número do voo.                                                            |
-| tail_number            | varchar     | Identificação da aeronave.                                                |
-| origin_airport         | varchar     | Código IATA do aeroporto de origem.                                       |
-| destination_airport    | varchar     | Código IATA do aeroporto de destino.                                      |
-| scheduled_departure    | int         | Horário programado de partida (HHMM).                                     |
-| departure_time         | int         | Horário real de partida (HHMM).                                           |
-| departure_delay        | int         | Atraso na decolagem (minutos).                                            |
-| taxi_out               | int         | Tempo gasto em solo antes da decolagem (minutos).                         |
-| wheels_off             | int         | Horário em que a aeronave decolou (HHMM).                                 |
-| scheduled_time         | int         | Tempo de voo programado (minutos).                                        |
-| elapsed_time           | int         | Tempo total do voo (minutos).                                             |
-| air_time               | int         | Tempo em voo (minutos).                                                   |
-| distance               | int         | Distância percorrida (milhas).                                            |
-| wheels_on              | int         | Horário em que a aeronave pousou (HHMM).                                  |
-| taxi_in                | int         | Tempo gasto em solo após o pouso (minutos).                               |
-| schedule_arrival       | int         | Horário programado de chegada (HHMM).                                     |
-| arrival_time           | int         | Horário real de chegada (HHMM).                                           |
-| arrival_delay          | int         | Atraso na chegada (minutos).                                              |
-| diverted               | boolean     | Indica se o voo foi desviado (1=Sim, 0=Não).                              |
-| cancelled              | boolean     | Indica se o voo foi cancelado (1=Sim, 0=Não).                             |
-| cancellation_reason    | varchar     | Motivo do cancelamento (A=Companhia, B=Clima, C=Segurança, D=Outros).     |
-| air_system_delay       | int         | Atraso devido ao sistema aéreo (minutos).                                 |
-| security_delay         | int         | Atraso devido a questões de segurança (minutos).                          |
-| airline_delay          | int         | Atraso devido à companhia aérea (minutos).                                |
-| late_aircraft_delay    | int         | Atraso causado por chegada tardia de outra aeronave (minutos).            |
-| weather_delay          | int         | Atraso devido ao clima (minutos).                                         |
+## Como executar o projeto
 
-#### **Tabela: AIRLINE**
-| Coluna     | Tipo    | Descrição                        |
-|------------|---------|----------------------------------|
-| iata_code  | varchar | Código IATA da companhia aérea.  |
-| airline    | varchar | Nome da companhia aérea.         |
+Siga os passos abaixo para configurar e executar o projeto em seu ambiente local.
 
-#### **Tabela: AIRPORT**
-| Coluna     | Tipo    | Descrição                                |
-|------------|---------|------------------------------------------|
-| iata_code  | varchar | Código IATA do aeroporto.                |
-| airport    | varchar | Nome do aeroporto.                       |
-| city       | varchar | Cidade onde o aeroporto está localizado. |
-| state      | varchar | Estado onde o aeroporto está localizado. |
-| country    | varchar | País onde o aeroporto está localizado.   |
-| latitude   | decimal | Latitude geográfica.                     |
-| longitude  | decimal | Longitude geográfica.                    |
+### Pré-requisitos
 
-## Camada Silver
+Antes de começar, garanta que você tenha as seguintes ferramentas instaladas:
 
-Na **camada Silver**, os dados da Bronze foram **limpos e integrados**.  
-As entidades **AIRLINE** e **AIRPORT** foram unificadas na entidade **FLIGHT**.  
-Foram removidos atributos irrelevantes ou redundantes e criado um identificador único `id_flight`.
+- [**Docker**](https://docs.docker.com/get-docker/)
+- [**Docker Compose**](https://docs.docker.com/compose/install/)
+- [**Python 3**](https://www.python.org/downloads/)
 
-### Modelo Entidade-Relacionamento (ME-R)
-**Entidades**  
-- FLIGHT (única consolidada)  
+> **Obs.: É necessário ter no mínimo 5GB de armazenamento livres.**
 
-### Dicionário de Dados – Silver
+### 1\. Clone o repositório
 
-#### **Tabela: FLIGHT**
-| Coluna                        | Tipo     | Descrição                                                                 |
-|-------------------------------|----------|---------------------------------------------------------------------------|
-| id_flight                     | int      | Identificador único do voo (chave primária).                              |
-| month                         | int      | Mês do voo (1 a 12).                                                      |
-| day                           | int      | Dia do mês.                                                               |
-| day_of_week                   | int      | Dia da semana (1=Segunda, 7=Domingo).                                     |
-| airline_iata_code             | varchar  | Código IATA da companhia aérea.                                           |
-| airline_name                  | varchar  | Nome da companhia aérea.                                                  |
-| tail_number                   | varchar  | Identificação da aeronave.                                                |
-| origin_airport_iata_code      | varchar  | Código IATA do aeroporto de origem.                                       |
-| origin_airport_name           | varchar  | Nome do aeroporto de origem.                                              |
-| origin_airport_city           | varchar  | Cidade do aeroporto de origem.                                            |
-| origin_airport_state          | varchar  | Estado do aeroporto de origem.                                            |
-| origin_airport_latitude       | decimal  | Latitude do aeroporto de origem.                                          |
-| origin_airport_longitude      | decimal  | Longitude do aeroporto de origem.                                         |
-| destination_airport_iata_code | varchar  | Código IATA do aeroporto de destino.                                      |
-| destination_airport_name      | varchar  | Nome do aeroporto de destino.                                             |
-| destination_airport_city      | varchar  | Cidade do aeroporto de destino.                                           |
-| destination_airport_state     | varchar  | Estado do aeroporto de destino.                                           |
-| destination_airport_latitude  | decimal  | Latitude do aeroporto de destino.                                         |
-| destination_airport_longitude | decimal  | Longitude do aeroporto de destino.                                        |
-| scheduled_departure           | int      | Horário programado de partida (HHMM).                                     |
-| departure_time                | int      | Horário real de partida (HHMM).                                           |
-| departure_delay               | int      | Atraso na decolagem (minutos).                                            |
-| scheduled_time                | int      | Tempo de voo programado (minutos).                                        |
-| elapsed_time                  | int      | Tempo total do voo (minutos).                                             |
-| air_time                      | int      | Tempo em voo (minutos).                                                   |
-| schedule_arrival              | int      | Horário programado de chegada (HHMM).                                     |
-| arrival_time                  | int      | Horário real de chegada (HHMM).                                           |
-| arrival_delay                 | int      | Atraso na chegada (minutos).                                              |
-| air_system_delay              | int      | Atraso devido ao sistema aéreo (minutos).                                 |
-| security_delay                | int      | Atraso devido a questões de segurança (minutos).                          |
-| airline_delay                 | int      | Atraso devido à companhia aérea (minutos).                                |
-| late_aircraft_delay           | int      | Atraso causado por chegada tardia de outra aeronave (minutos).            |
-| weather_delay                 | int      | Atraso devido ao clima (minutos).                                         |
+```bash
+git clone https://github.com/phmelosilva/Flight-Delays-Data-Pipeline-and-Analysis.git
 
-## Camada Gold
+cd Flight-Delays-Data-Pipeline-and-Analysis
+```
 
-Na **camada Gold**, os dados já limpos e padronizados da camada Silver são agregados e modelados em estruturas otimizadas para o consumo final.
-É aqui que os dados são transformados em **Data Warehouses** focados em áreas de negócio específicas, prontos para serem utilizados em análises, relatórios e dashboards. A principal característica desta camada é a otimização para leitura e performance analítica.
+### 2\. Gere as chaves de segurança
+
+O Airflow requer uma chave de criptografia (Fernet Key) e uma chave secreta (JWT Secret). Execute os comandos abaixo no seu terminal para gerá-las.
+
+```bash
+# Gerar a Fernet Key
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+# Gerar a JWT Secret
+python3 -c "import secrets; print(secrets.token_hex(16))"
+```
+
+Salve os dois valores gerados em um bloco de notas.
+
+### 3\. Configure as variáveis de ambiente
+
+Primeiro, copie o arquivo `.env.example` de exemplo para criar seu arquivo de configuração local.
+
+```bash
+cp .env.example .env
+```
+
+Com um editor de texto, altere o arquivo `.env` na raiz do projeto com os valores de chave gerado anteriormente. Um exemplo é mostrado a seguir.
+
+```env
+...
+
+# Airflow Commons
+AIRFLOW__CORE__FERNET_KEY='COLOQUE AQUI ENTRE ASPAS SIMPLES SUA CHAVE FERNET'   <-- Altere aqui
+AIRFLOW__API_AUTH__JWT_SECRET=COLOQUE DEPOIS DO '=' SUA CHAVE JWT               <-- Altere aqui
+
+...
+```
+
+### 4\. Inicie o contêiner com os serviços
+
+Com a engine do Docker iniciado, suba todos os serviços (Airflow, Scheduler, Banco de Dados, etc.) com um único comando no terminal:
+
+```bash
+docker compose up -d --build
+```
+
+O processo pode demorar na primeira execução, pois o Docker fará o download das imagens e depêndecias necessárias e inicializará os serviços.
+
+### 5\. Acesse a Interface do Airflow
+
+Após se certificar que todos os serviçoes estão prontos, a interface do Airflow estará disponível no seu navegador:
+
+- **URL:** `http://localhost:8080`
+- **Usuário:** `airflow` ou `usuário definido no .env`
+- **Senha:** `airflow` ou `senha definida no .env`
+
+### 6\. Ative e execute as DAGs
+
+---
 
 ## Histórico de Versões
 
-| Data       | Versão | Atividade                                          | Responsável          |
-| ---------- | ------ | -------------------------------------------------- | -------------------- |
-| 21/09/2025 | 1.0    | Criação inicial do README com dicionário de dados. | Júlia Takaki         |
-| 24/09/2025 | 1.0    | Ajustes no README com explicação sobre camada Gold | Pedro Henrique       |
-
+| Versão | Data       | Descrição                                                  | Autor(es)                                        | Revisor(es)                                      |
+| ------ | ---------- | ---------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `1.0`  | 21/09/2025 | Criação inicial do README com dicionário de dados.         | [Júlia Takaki](https://github.com/juliatakaki)   | [Matheus Henrique](https://github.com/mathonaut) |
+| `1.1`  | 24/09/2025 | Ajustes no README com explicação sobre camada Gold.        | [Pedro Henrique](https://github.com/phmelosilva) | [Matheus Henrique](https://github.com/mathonaut) |
+| `1.2`  | 25/09/2025 | Reestrutura o README para refletir as mudanças no projeto. | [Matheus Henrique](https://github.com/mathonaut) | [Joao Schmitz](https://github.com/JoaoSchmitz)   |

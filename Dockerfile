@@ -1,16 +1,17 @@
-# Build Stage
-FROM python:3.11-slim as builder
+# Build
+FROM python:3.12-slim AS builder
 
-# Define um prefixo de instalação para manter tudo organizado
-ENV INSTALL_PATH=/install
+RUN pip install --upgrade pip setuptools wheel
 
-# Cria o diretório e define as permissões
-RUN mkdir -p ${INSTALL_PATH} && chown -R 1000:0 ${INSTALL_PATH}
+WORKDIR /src
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=${INSTALL_PATH} -r requirements.txt
+COPY . .
 
-# Installation Stage
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN python setup.py bdist_wheel
+
+# Final
 
 FROM apache/airflow:3.0.6
 
@@ -21,13 +22,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Localiza o diretório 'site-packages' do Python na imagem do Airflow
-ENV PYTHON_SITE_PACKAGES=/usr/local/lib/python3.11/site-packages
+COPY requirements.txt .
 
-# Copia apenas as bibliotecas instaladas do 'builder' para a imagem final
-COPY --from=builder --chown=airflow:0 /install/lib/python3.11/site-packages/* ${PYTHON_SITE_PACKAGES}/
-
-# Copia os executáveis (como jupyter, pyspark) para um diretório no PATH
-COPY --from=builder --chown=airflow:0 /install/bin/* /usr/local/bin/
+COPY --from=builder /src/dist/*.whl /dist/
 
 USER airflow
+
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir /dist/*.whl
