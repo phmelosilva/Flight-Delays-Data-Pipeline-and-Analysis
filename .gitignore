@@ -1,5 +1,5 @@
 .env
-/dbdata
+/flights-db-data
 /airflow/logs
 /airflow/config
 __pycache__/

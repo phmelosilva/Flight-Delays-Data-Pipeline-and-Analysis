@@ -10,8 +10,8 @@ O principal objetivo é criar um Data Lake robusto e automatizado, onde cada eta
 
 - **Orquestração:** Apache Airflow;
 - **Conteinerização:** Docker & Docker Compose;
-- **Banco de Dados (Metadados do Airflow e Data Warehouse):** PostgreSQL 16;
-- **Análise e Processamento de Dados:** Matplotlib, Pandas, PySpark, Seaborn e Scikit-learn;
+- **Banco de Dados (Metadados do Airflow e Data Warehouse):** PostgreSQL;
+- **Análise e Processamento de Dados:** Jupyter Notebook, Matplotlib, Pandas, PySpark, Seaborn e Scikit-learn;
 - **Visualização:** Microsoft PowerBI e Tableau (Provisórios);
 - **Linguagens:** Python, SQL & Bash.
 
@@ -19,47 +19,45 @@ O principal objetivo é criar um Data Lake robusto e automatizado, onde cada eta
 
 ```
 .
+├── .dockerignore
 ├── .env.example
 ├── .gitignore
 ├── Dockerfile
-├── docker-compose.yaml
 ├── README.md
-├── requirements.txt
-├── setup.py
+├── pyproject.toml
 │
 ├── airflow
-│   ├── config
 │   ├── dags
 │   │   ├── ingestion
 │   │   ├── modeling
 │   │   ├── setup
-│   │   ├── stage
 │   │   └── transformation
-│   ├── logs
 │   └── plugins
 │
+├── analytics
+│   ├── analytics_env
+│   ├── gold_analysis
+│   └── silver_analysis
+│
 ├── datalake
-│   ├── stage
 │   ├── bronze
+│   ├── gold
 │   ├── silver
-│   └── gold
+│   └── stage
+│
+├── docker-compose.yaml
 │
 ├── docs
 │   └── data_dictionary
 │       ├── bronze
-│       ├── silver
-│       └── gold
-│
-├── notebooks
-│   ├── bronze_analysis
-│   └── silver_analysis
+│       ├── gold
+│       └── silver
 │
 ├── pipelines
 │   ├── ingestion
 │   ├── modeling
-│   ├── setup
-│   ├── stage
-│   └── transformation
+│   ├── transformation
+│   └── utils
 │
 └── tests
 ```

@@ -1,3 +1,15 @@
+# ---
+#                    MODIFICATION NOTICE
+#
+# This docker-compose.yaml is a modified version of the official
+# file provided by the Apache Airflow project. It has been adapted
+# to suit the specific requirements of the foloowing project:
+#
+#   https://github.com/phmelosilva/Flight-Delays-Data-Pipeline-and-Analysis/
+#
+# The original Apache License 2.0 notice is retained below.
+# ---
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -68,7 +80,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./dbdata:/var/lib/postgresql/data
+      - ./flights-db-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
 
@@ -150,6 +162,8 @@ services:
     <<: *airflow-common
     build: .
     container_name: airflow_scheduler
+    env_file:
+      - .env
     command: scheduler
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
@@ -167,6 +181,8 @@ services:
     <<: *airflow-common
     build: .
     container_name: airflow_dag_processor
+    env_file:
+      - .env
     command: dag-processor
     healthcheck:
       test:
@@ -188,6 +204,8 @@ services:
     <<: *airflow-common
     image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.0.6}
     container_name: airflow_triggerer
+    env_file:
+      - .env
     command: triggerer
     healthcheck:
       test:
@@ -222,6 +240,23 @@ services:
       - airflow
     depends_on:
       <<: *airflow-common-depends-on
+
+  analytics-notebook:
+    container_name: analytics_notebook
+    build: ./analytics/analytics_env
+    command: >
+      jupyter lab
+      --ip=0.0.0.0
+      --no-browser
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+    ports:
+      - "8889:8888"
+    volumes:
+      - ./datalake:/home/jovyan/datalake
+      - ./analytics:/home/jovyan/analytics
+    restart: always
 
 volumes:
   postgres-db-volume:

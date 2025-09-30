@@ -3,16 +3,22 @@ from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from airflow.hooks.base import BaseHook
 from airflow.utils.log.logging_mixin import LoggingMixin
 
+
 log = LoggingMixin().log
 
 def create_schemas():
     """
-    Essa função garante a existência dos schemas necessários no banco de dados.
+    Garante a existência dos schemas principais no banco de dados PostgreSQL.
     Ela se conecta ao banco de dados e executa o comando
-    'CREATE SCHEMA IF NOT EXISTS' para crias os schemas 'bronze', 'silver' e 'gold'.
+    'CREATE SCHEMA IF NOT EXISTS' para crias os schemas 'silver' e 'gold'.
+
+    Raises:
+        OperationalError: se não for possível conectar ao banco.
+        SQLAlchemyError: se houver falha na execução dos comandos SQL.
+        Exception: para erros genéricos não previstos.
     """
 
-    schemas = ['bronze', 'silver', 'gold']
+    schemas = ['silver', 'gold']
     conn = BaseHook.get_connection('flights_db')
     connection_uri = f"postgresql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     engine = create_engine(connection_uri)
@@ -22,7 +28,6 @@ def create_schemas():
             test_conn.execute(text("SELECT 1"))
         log.info(f"Conexão com o banco '{conn.schema}' bem-sucedida.")
 
-        # Verifica e cria os schemas se necessário.
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
             for schema in schemas:
                 query = text(f"CREATE SCHEMA IF NOT EXISTS {schema};")
