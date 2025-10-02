@@ -1,4 +1,5 @@
 .env
+.venv/
 /flights-db-data
 /airflow/logs
 /airflow/config
