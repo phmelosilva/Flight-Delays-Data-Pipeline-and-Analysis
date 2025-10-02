@@ -39,7 +39,7 @@ def move_files(spark: SparkSession, source_files: list[str], base_dest_path: str
 
         dest_dir = f"{base_dest_path}/{processing_date}/{file_type}"
         destinations[dest_dir].append(file_path)
-    
+
     # Criando os diretórios de destino.
     for dest_dir_str in destinations.keys():
         dest_path = Path(dest_dir_str)
@@ -72,7 +72,7 @@ def delete_files(spark: SparkSession, files_to_delete: list[str]) -> None:
     if not files_to_delete:
         log.info("Nenhum arquivo para deletar.")
         return
-    
+
     fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
     Path = spark._jvm.org.apache.hadoop.fs.Path
 

@@ -125,7 +125,7 @@ def ingest_stage_to_bronze_dag():
         initial_files=initial_file_list,
         unified_file=unified_file_path,
         bronze_path="{{ var.value.datalake_bronze_path }}",
-        processing_date="{{ ds }}"
+        processing_date="{{ data_interval_start.in_timezone('America/Sao_Paulo').format('YYYY-MM-DD') }}"
     )
     
     cleanup_task_instance = clean_up_stage_task(
