@@ -1,9 +1,10 @@
 from airflow.decorators import dag, task
 from pendulum import datetime, duration
 from pyspark.sql import SparkSession
-from pipelines.ingestion.check_files_in_stage import check_files_in_stage
-from pipelines.ingestion.spark_processing import reassemble_chunks, save_df_as_single_file
-from pipelines.ingestion.file_management import move_files, delete_files
+from pipelines.utils.check_files_in_folder import check_files_in_folder
+from pipelines.ingestion.reassemble_chunks import reassemble_chunks
+from pipelines.utils.spark_processing import save_df_as_single_file
+from pipelines.utils.file_management import move_files, delete_files
 
 
 @dag(
@@ -41,11 +42,11 @@ def ingest_stage_to_bronze_dag():
     }
 
     @task
-    def check_files_in_stage_task(stage_path: str) -> list[str]:
+    def check_files_in_folder_task(stage_path: str) -> list[str]:
         """
         Verifica se há arquivos CSV disponíveis na Stage.
         """
-        return check_files_in_stage(stage_path=stage_path, file_pattern="*.csv")
+        return check_files_in_folder(folder_path=stage_path, file_pattern="*.csv")
 
     @task
     def unify_chunks_task(files_in_stage: list[str], stage_path: str, spark_cores: str) -> str:
@@ -111,7 +112,7 @@ def ingest_stage_to_bronze_dag():
         finally:
             spark.stop()
 
-    initial_file_list = check_files_in_stage_task(
+    initial_file_list = check_files_in_folder_task(
         stage_path="{{ var.value.datalake_stage_path }}"
     )
     

@@ -1,7 +1,7 @@
-from pyspark.sql import SparkSession
-from airflow.utils.log.logging_mixin import LoggingMixin
 from pathlib import Path as PythonPath
 from collections import defaultdict
+from pyspark.sql import SparkSession
+from airflow.utils.log.logging_mixin import LoggingMixin
 
 
 log = LoggingMixin().log
