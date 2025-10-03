@@ -1,12 +1,10 @@
-/dev
-.pytest_cache
-/airflow_pipelines.egg-info
 .env
-/flights-db-data
+.pytest_cache
 /airflow/logs
 /airflow/config
+/dev
+/flights-db-data
 __pycache__/
-dbt/profiles.yml
 dbt/logs/
 dbt/target/
 dbt_packages/

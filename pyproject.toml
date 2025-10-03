@@ -36,8 +36,7 @@ analytics = [
 ]
 
 dev = [
-    "airflow-pipelines[airflow]",
-    "airflow-pipelines[dbt]",
+    "airflow-pipelines[airflow,dbt]",
     "pytest==8.4.1",
     "pytest-mock",
     "pytest-cov>=4.0.0",

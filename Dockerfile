@@ -5,7 +5,7 @@ RUN pip install --upgrade pip build
 
 WORKDIR /src
 
-COPY pyproject.toml .
+COPY . .
 
 RUN python -m build --wheel --outdir dist
 
@@ -24,5 +24,5 @@ COPY --from=builder /src/dist/*.whl /dist/
 USER airflow
 
 RUN for whl in /dist/*.whl; do \
-        pip install --no-cache-dir "${whl}[airflow]"; \
+        pip install --no-cache-dir "${whl}[dev]"; \
     done
