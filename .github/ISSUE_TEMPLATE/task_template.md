@@ -1,8 +1,10 @@
 ---
-name: '📄 Nova Tarefa'
+name: "\U0001F4C4 Nova Tarefa"
+about: 'Organização de tarefas entre os membros do grupo '
 title: 'feat: '
-labels: ['a fazer']
+labels: ''
 assignees: ''
+
 ---
 
 ### 🎯 Objetivo
