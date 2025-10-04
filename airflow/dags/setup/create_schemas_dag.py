@@ -1,6 +1,6 @@
 from airflow.decorators import dag, task
 from pendulum import datetime, duration
-from pipelines.utils.create_schemas import create_schemas
+from pipelines.setup.create_schemas import create_schemas
 
 
 @dag(

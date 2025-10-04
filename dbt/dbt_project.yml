@@ -1,0 +1,26 @@
+name: "flights_data_models"
+version: "1.0.0"
+config-version: 2
+
+profile: "flights_project"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  flights_data_models:
+    staging:
+      +schema: bronze
+    intermediate:
+      +schema: silver
+    marts:
+      +schema: gold

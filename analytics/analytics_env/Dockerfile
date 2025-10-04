@@ -1,9 +1,22 @@
-FROM jupyter/minimal-notebook:latest
+FROM python:3.12-slim
 
-USER root
+WORKDIR /home/jovyan
 
-COPY requirements.txt /tmp/requirements.txt
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1
 
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        curl \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-USER ${NB_UID}
+RUN pip install --upgrade pip \
+    && pip install jupyterlab notebook ipykernel
+
+COPY ../../pyproject.toml ./
+
+RUN pip install ".[analytics]"
+
+EXPOSE 8888

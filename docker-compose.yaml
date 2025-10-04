@@ -44,12 +44,15 @@ x-airflow-common: &airflow-common
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     AIRFLOW_CONFIG: "/opt/airflow/config/airflow.cfg"
+    PYTHONPATH: "/opt/airflow:${PYTHONPATH}"
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/datalake:/opt/airflow/datalake
+    - ./pipelines:/opt/airflow/pipelines
+    - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     postgres:
@@ -71,6 +74,8 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+    networks:
+      - flights_project_net
 
   flights_db:
     image: postgres:16
@@ -83,6 +88,8 @@ services:
       - ./flights-db-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
+    networks:
+      - flights_project_net
 
   airflow-init:
     <<: *airflow-common
@@ -138,6 +145,8 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     user: "0:0"
+    networks:
+      - flights_project_net
 
   airflow-apiserver:
     <<: *airflow-common
@@ -157,6 +166,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - flights_project_net
 
   airflow-scheduler:
     <<: *airflow-common
@@ -176,6 +187,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - flights_project_net
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -199,6 +212,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - flights_project_net
 
   airflow-triggerer:
     <<: *airflow-common
@@ -222,28 +237,14 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
-  airflow-cli:
-    <<: *airflow-common
-    build: .
-    container_name: airflow_cli
-    profiles:
-      - debug
-    ports:
-      - "8888:8888"
-    environment:
-      <<: *airflow-common-env
-      CONNECTION_CHECK_MAX_COUNT: "0"
-    command:
-      - bash
-      - -c
-      - airflow
-    depends_on:
-      <<: *airflow-common-depends-on
+    networks:
+      - flights_project_net
 
   analytics-notebook:
     container_name: analytics_notebook
-    build: ./analytics/analytics_env
+    build:
+      context: .
+      dockerfile: analytics/analytics_env/Dockerfile
     command: >
       jupyter lab
       --ip=0.0.0.0
@@ -251,12 +252,34 @@ services:
       --allow-root
       --NotebookApp.token=''
       --NotebookApp.password=''
+      --notebook-dir=/home/jovyan
     ports:
-      - "8889:8888"
+      - "8888:8888"
     volumes:
       - ./datalake:/home/jovyan/datalake
       - ./analytics:/home/jovyan/analytics
+      - ./pipelines:/home/jovyan/pipelines
     restart: always
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
+    container_name: dbt_runner
+    depends_on:
+      - flights_db
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - ./dbt:/usr/app/dbt
+    working_dir: /usr/app/dbt
+    command: ["sleep", "infinity"]
+    networks:
+      - flights_project_net
 
 volumes:
   postgres-db-volume:
+
+networks:
+  flights_project_net:
+    driver: bridge

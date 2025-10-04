@@ -23,4 +23,6 @@ COPY --from=builder /src/dist/*.whl /dist/
 
 USER airflow
 
-RUN pip install --no-cache-dir /dist/*.whl
+RUN for whl in /dist/*.whl; do \
+        pip install --no-cache-dir "${whl}[dev]"; \
+    done

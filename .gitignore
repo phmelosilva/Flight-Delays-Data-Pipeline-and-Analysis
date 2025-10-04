@@ -1,6 +1,11 @@
 .env
 .venv/
-/flights-db-data
+.pytest_cache
 /airflow/logs
 /airflow/config
+/dev
+/flights-db-data
 __pycache__/
+dbt/logs/
+dbt/target/
+dbt_packages/
