@@ -18,7 +18,7 @@ def create_schemas():
         Exception: para erros genéricos não previstos.
     """
 
-    schemas = ['silver', 'gold']
+    schemas = ['raw', 'silver', 'gold']
     conn = BaseHook.get_connection('flights_db')
     connection_uri = f"postgresql://{conn.login}:{conn.password}@{conn.host}:{conn.port}/{conn.schema}"
     engine = create_engine(connection_uri)
