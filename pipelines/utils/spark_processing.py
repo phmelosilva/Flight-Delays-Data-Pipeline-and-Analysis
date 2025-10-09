@@ -5,7 +5,7 @@ from airflow.utils.log.logging_mixin import LoggingMixin
 
 log = LoggingMixin().log
 
-def save_df_as_single_file(df: DataFrame, dest_path: str, filename: str, single_file: bool = False) -> str:
+def save_df_as_parquet_file(df: DataFrame, dest_path: str, filename: str, single_file: bool = False) -> str:
     """
     Salva um DataFrame Spark em formato Parquet.
 

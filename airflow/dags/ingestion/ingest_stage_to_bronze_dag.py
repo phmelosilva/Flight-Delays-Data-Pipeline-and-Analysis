@@ -3,7 +3,7 @@ from pendulum import datetime, duration
 from pyspark.sql import SparkSession
 from pipelines.utils.check_files_in_folder import check_files_in_folder
 from pipelines.ingestion.reassemble_chunks import reassemble_chunks
-from pipelines.utils.spark_processing import save_df_as_single_file
+from pipelines.utils.spark_processing import save_df_as_parquet_file
 from pipelines.utils.file_management import move_files, delete_files
 
 
@@ -23,13 +23,13 @@ from pipelines.utils.file_management import move_files, delete_files
 
         DAG de Ingestão da Stage para Bronze
 
-        Esta DAG orquestra a ingestão de dados da área de Stage para a
+        Esta DAG orquestra a ingestão de dados da área de stage para a
         camada Bronze. O processo segue 4 etapas sequenciais:
-        1. Verifica: Verifica a presença dos arquivos CSV na Stage.
-        2. Unifica: Junta os chunks ''flights_part_*.csv' em um único arquivo
-        ''flights.csv' na Stage.
-        3. Move: Transfere os arquivos consolidados para a camada Bronze.
-        4. Limpa: Deleta todos os arquivos da Stage.
+        1. Verifica: Verifica a presença dos arquivos CSV na stage.
+        2. Unifica: Junta os chunks 'flights_part_*.csv' em um único arquivo
+        'parquet' na stage.
+        3. Move: Transfere os arquivos consolidados para a camada bronze.
+        4. Limpa: Deleta todos os arquivos da stage.
 
     ---------------------------------------------------------------------------
     """,
@@ -51,7 +51,7 @@ def ingest_stage_to_bronze_dag():
     @task
     def unify_chunks_task(files_in_stage: list[str], stage_path: str, spark_cores: str) -> str:
         """
-        Unifica os arquivos de chunk (`flights_part_*.csv`) em um único `flights.csv`.
+        Unifica os arquivos de chunk (`flights_part_*.csv`) em um único arquivo parquet.
         """
         spark = SparkSession.builder \
             .appName("UnifyFlightsChunks") \
@@ -63,8 +63,8 @@ def ingest_stage_to_bronze_dag():
             flight_chunks = [f for f in files_in_stage if "flights_part" in f]
             flights_df = reassemble_chunks(spark, flight_chunks)
             
-            new_filename = "flights.csv"
-            save_df_as_single_file(flights_df, dest_path=stage_path, filename=new_filename)
+            new_filename = "flights.parquet"
+            save_df_as_parquet_file(flights_df, dest_path=stage_path, filename=new_filename)
 
             return f"{stage_path}/{new_filename}"
         

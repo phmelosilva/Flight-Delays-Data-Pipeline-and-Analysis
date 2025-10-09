@@ -1,8 +1,12 @@
 .env
+.ipynb_checkpoints
 .venv/
 .pytest_cache
 /airflow/logs
 /airflow/config
+/datalake/bronze
+/datalake/gold
+/datalake/silver
 /dev
 /flights-db-data
 __pycache__/
