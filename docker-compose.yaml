@@ -35,7 +35,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW_CONN_FLIGHTS_DB: "postgresql://${DB_USER}:${DB_PASSWORD}@flights_db:5432/${DB_NAME}"
+    AIRFLOW_CONN_DW_DB: "postgresql://${DB_USER}:${DB_PASSWORD}@dw_db:5432/${DB_NAME}"
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:-}
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
@@ -75,21 +75,23 @@ services:
       start_period: 5s
     restart: always
     networks:
-      - flights_project_net
+      - dw_net
 
-  flights_db:
-    image: postgres:16
-    container_name: flights_db
+  dw_db:
+    build:
+      context: ./dw_db
+    container_name: dw_db
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./flights-db-data:/var/lib/postgresql/data
+      - ./dw-data:/var/lib/postgresql/data
+      - ./dw_db/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     networks:
-      - flights_project_net
+      - dw_net
 
   airflow-init:
     <<: *airflow-common
@@ -146,7 +148,7 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     user: "0:0"
     networks:
-      - flights_project_net
+      - dw_net
 
   airflow-apiserver:
     <<: *airflow-common
@@ -167,7 +169,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - flights_project_net
+      - dw_net
 
   airflow-scheduler:
     <<: *airflow-common
@@ -188,7 +190,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - flights_project_net
+      - dw_net
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -213,7 +215,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - flights_project_net
+      - dw_net
 
   airflow-triggerer:
     <<: *airflow-common
@@ -238,7 +240,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - flights_project_net
+      - dw_net
 
   analytics-notebook:
     container_name: analytics_notebook
@@ -265,7 +267,7 @@ services:
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     container_name: dbt_runner
     depends_on:
-      - flights_db
+      - dw_db
     environment:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -275,11 +277,11 @@ services:
     working_dir: /usr/app/dbt
     command: ["sleep", "infinity"]
     networks:
-      - flights_project_net
+      - dw_net
 
 volumes:
   postgres-db-volume:
 
 networks:
-  flights_project_net:
+  dw_net:
     driver: bridge

@@ -11,7 +11,7 @@ O principal objetivo é criar um Data Lake robusto e automatizado, onde cada eta
 - **Orquestração:** Apache Airflow;
 - **Conteinerização:** Docker & Docker Compose;
 - **Banco de Dados (Metadados do Airflow e Data Warehouse):** PostgreSQL;
-- **Análise e Processamento de Dados:** Jupyter Notebook, Matplotlib, Pandas, PySpark, Seaborn e Scikit-learn;
+- **Análise e Processamento de Dados:** dbt, Jupyter Notebook, Matplotlib, Pandas, PySpark, Seaborn e Scikit-learn;
 - **Visualização:** Microsoft PowerBI e Tableau (Provisórios);
 - **Linguagens:** Python, SQL & Bash.
 

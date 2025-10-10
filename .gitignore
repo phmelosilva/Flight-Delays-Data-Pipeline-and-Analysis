@@ -8,7 +8,7 @@
 /datalake/gold
 /datalake/silver
 /dev
-/flights-db-data
+/dw-data
 __pycache__/
 dbt/logs/
 dbt/target/
