@@ -1,6 +1,6 @@
 -- -----------------------------------------------------------------------------------------------------------------------
 --
---                                        CRIPT DE CRIAÇÃO (DDL)                                                
+--                                        SCRIPT DE CRIAÇÃO (DDL)                                                
 -- 
 -- Data Criação ...........: 09/10/2025
 -- Autor(es) ..............: Júlia Takaki, Matheus Henrique Dos Santos
@@ -17,7 +17,7 @@ SET search_path TO silver;
 
 
 CREATE TABLE IF NOT EXISTS flights_silver (
-    flight_id VARCHAR(64) PRIMARY KEY,
+    flight_id INTEGER PRIMARY KEY,
     flight_year SMALLINT NOT NULL,
     flight_month SMALLINT NOT NULL,
     flight_day SMALLINT NOT NULL,
