@@ -5,7 +5,7 @@ from pipelines.utils.check_files_in_folder import check_files_in_folder
 from pipelines.ingestion.reassemble_chunks import reassemble_chunks
 from pipelines.utils.spark_processing import save_df_as_parquet_file
 from pipelines.utils.file_management import move_files, delete_files
-
+from pipelines.utils.metadata_collector import log_files_metadata
 
 @dag(
     dag_id="ingest_stage_to_bronze",
@@ -96,6 +96,23 @@ def ingest_stage_to_bronze_dag():
             spark.stop()
 
     @task
+    def log_metadata_task(bronze_path: str, processing_date: str):
+        """
+        Coleta e registra metadados dos arquivos na camada Bronze.
+        """
+
+        output_path = f"/opt/airflow/docs/metadata/{processing_date}_ingestion_metadata.csv"
+
+        spark = SparkSession.builder \
+            .appName("MetadataCollector") \
+            .master("local[1]") \
+            .getOrCreate()
+        try:
+            log_files_metadata(spark, bronze_path, processing_date, output_csv_path=output_path)
+        finally:
+            spark.stop()
+
+    @task
     def clean_up_stage_task(initial_files: list[str], unified_file: str):
         """
         Remove todos os arquivos da Stage após a movimentação para Bronze.
@@ -128,12 +145,17 @@ def ingest_stage_to_bronze_dag():
         bronze_path="{{ var.value.datalake_bronze_path }}",
         processing_date="{{ data_interval_start.in_timezone('America/Sao_Paulo').format('YYYY-MM-DD') }}"
     )
+
+    log_metadata_instance = log_metadata_task(
+        bronze_path="{{ var.value.datalake_bronze_path }}",
+        processing_date="{{ data_interval_start.in_timezone('America/Sao_Paulo').format('YYYY-MM-DD') }}"
+    )
     
     cleanup_task_instance = clean_up_stage_task(
         initial_files=initial_file_list, 
         unified_file=unified_file_path
     )
 
-    unified_file_path >> move_task_instance >> cleanup_task_instance
+    unified_file_path >> move_task_instance >> log_metadata_instance >>  cleanup_task_instance
 
 ingest_stage_to_bronze_dag()
