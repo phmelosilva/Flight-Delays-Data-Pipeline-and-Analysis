@@ -7,7 +7,6 @@ from pipelines.ingestion.reassemble_chunks import reassemble_chunks
 from pipelines.utils.spark_processing import save_df_as_parquet_file
 from pipelines.utils.file_management import move_files, delete_files
 
-
 @dag(
     dag_id="ingest_stage_to_bronze",
     start_date=datetime(2025, 1, 1, tz="America/Sao_Paulo"),
@@ -106,7 +105,6 @@ def ingest_stage_to_bronze_dag():
             return new_parquet_files
         finally:
             spark.stop()
-
 
     @task
     def move_files_to_bronze_task(
