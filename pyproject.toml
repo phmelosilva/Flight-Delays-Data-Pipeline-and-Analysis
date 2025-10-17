@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=75", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airflow-pipelines"
+version = "0.1.0"
+description = "Códigos modulares para serem utilizados pelas pipelines do projeto."
+license = { text = "MIT" }
+authors = [
+  { name = "Matheus Henrique Dos Santos", email = "matheushenriquep285@gmail.com" }
+]
+requires-python = ">=3.11"
+
+dependencies = []
+
+[project.optional-dependencies]
+airflow = [
+    "apache-airflow==3.0.6",
+    "apache-airflow-providers-docker==3.9.0",
+    "apache-airflow-providers-postgres==5.10.0",
+    "pyspark==4.0.1",
+    "pandas==2.3.2",
+]
+
+dbt = [
+    "dbt-core==1.9.1",
+    "dbt-postgres==1.9.1",
+]
+
+analytics = [
+    "pandas==2.3.2",
+    "matplotlib==3.10.6",
+    "seaborn==0.13.2",
+    "scikit-learn==1.7.2"
+]
+
+dev = [
+    "airflow-pipelines[airflow,dbt]",
+    "pytest==8.4.1",
+    "pytest-mock",
+    "pytest-cov>=4.0.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pipelines*"]
