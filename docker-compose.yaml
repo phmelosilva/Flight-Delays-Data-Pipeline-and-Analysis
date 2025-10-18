@@ -35,7 +35,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW_CONN_DW_DB: "postgresql://${DB_USER}:${DB_PASSWORD}@dw_db:5432/${DB_NAME}"
+    AIRFLOW_CONN_FLIGHTS_DB: "postgresql://${DB_USER}:${DB_PASSWORD}@flights_db:5432/${DB_NAME}"
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:-}
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
@@ -50,8 +50,8 @@ x-airflow-common: &airflow-common
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
-    - ${AIRFLOW_PROJ_DIR:-.}/datalake:/opt/airflow/datalake
-    - ./pipelines:/opt/airflow/pipelines
+    - ${AIRFLOW_PROJ_DIR:-.}/data-layer:/opt/airflow/data-layer
+    - ./transformer:/opt/airflow/transformer
     - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
@@ -75,23 +75,23 @@ services:
       start_period: 5s
     restart: always
     networks:
-      - dw_net
+      - flights_net
 
-  dw_db:
+  flights_db:
     build:
-      context: ./dw_db
-    container_name: dw_db
+      context: ./postgres
+    container_name: flights_db
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./dw-data:/var/lib/postgresql/data
-      - ./dw_db/init:/docker-entrypoint-initdb.d
+      - ./postgres/init:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
     networks:
-      - dw_net
+      - flights_net
 
   airflow-init:
     <<: *airflow-common
@@ -114,11 +114,11 @@ services:
         echo
         echo "Creating missing opt dirs if missing:"
         echo
-        mkdir -v -p /opt/airflow/{logs,dags,plugins,config,datalake}
+        mkdir -v -p /opt/airflow/{logs,dags,plugins,config,data-layer}
         echo
         echo "Files in shared volumes:"
         echo
-        ls -la /opt/airflow/{logs,dags,plugins,config,datalake}
+        ls -la /opt/airflow/{logs,dags,plugins,config,data-layer}
         echo
         echo "Running airflow config list to create default config file if missing."
         echo
@@ -126,7 +126,7 @@ services:
         echo
         echo "Files in shared volumes:"
         echo
-        ls -la /opt/airflow/{logs,dags,plugins,config,datalake}
+        ls -la /opt/airflow/{logs,dags,plugins,config,data-layer}
         echo
         echo "Change ownership of files in /opt/airflow to ${AIRFLOW_UID}:0"
         echo
@@ -134,11 +134,11 @@ services:
         echo
         echo "Change ownership of files in shared volumes to ${AIRFLOW_UID}:0"
         echo
-        chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config,datalake}
+        chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config,data-layer}
         echo
         echo "Files in shared volumes:"
         echo
-        ls -la /opt/airflow/{logs,dags,plugins,config,datalake}
+        ls -la /opt/airflow/{logs,dags,plugins,config,data-layer}
 
     environment:
       <<: *airflow-common-env
@@ -148,7 +148,7 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     user: "0:0"
     networks:
-      - dw_net
+      - flights_net
 
   airflow-apiserver:
     <<: *airflow-common
@@ -169,7 +169,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - dw_net
+      - flights_net
 
   airflow-scheduler:
     <<: *airflow-common
@@ -190,7 +190,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - dw_net
+      - flights_net
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -215,7 +215,7 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - dw_net
+      - flights_net
 
   airflow-triggerer:
     <<: *airflow-common
@@ -240,13 +240,13 @@ services:
       airflow-init:
         condition: service_completed_successfully
     networks:
-      - dw_net
+      - flights_net
 
   analytics-notebook:
     container_name: analytics_notebook
     build:
       context: .
-      dockerfile: analytics/analytics_env/Dockerfile
+      dockerfile: analytics/Dockerfile.analytics
     command: >
       jupyter lab
       --ip=0.0.0.0
@@ -258,30 +258,30 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./datalake:/home/jovyan/datalake
+      - ./data-layer:/home/jovyan/data-layer
       - ./analytics:/home/jovyan/analytics
-      - ./pipelines:/home/jovyan/pipelines
+      - ./transformer:/home/jovyan/transformer
     restart: always
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     container_name: dbt_runner
     depends_on:
-      - dw_db
+      - flights_db
     environment:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
     volumes:
-      - ./dbt:/usr/app/dbt
+      - ./transformer/dbt:/usr/app/dbt
     working_dir: /usr/app/dbt
     command: ["sleep", "infinity"]
     networks:
-      - dw_net
+      - flights_net
 
 volumes:
   postgres-db-volume:
 
 networks:
-  dw_net:
+  flights_net:
     driver: bridge

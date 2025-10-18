@@ -2,9 +2,9 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import DoubleType, IntegerType
 from airflow.utils.log.logging_mixin import LoggingMixin
-from pipelines.utils.helpers import to_date_from_ymd
-from pipelines.transformation.airlines_transformations import transform_airlines
-from pipelines.transformation.airports_transformations import transform_airports
+from transformer.utils.helpers import to_date_from_ymd
+from transformer.transformation.airlines_transformations import transform_airlines
+from transformer.transformation.airports_transformations import transform_airports
 
 
 log = LoggingMixin().log

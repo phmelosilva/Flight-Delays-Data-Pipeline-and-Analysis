@@ -1,7 +1,7 @@
 from airflow.decorators import dag, task
 from pendulum import datetime
 from pyspark.sql import SparkSession
-from pipelines.ingestion.load_datalake_to_postgres import load_data_to_postgres
+from transformer.ingestion.load_datalake_to_postgres import load_data_to_postgres
 
 @dag(
     dag_id="load_silver_to_db_dag",
