@@ -15,14 +15,22 @@ FROM apache/airflow:3.0.6
 USER root
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        build-essential \
+        git \
+        curl \
+        ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/dist/*.whl /dist/
 
 USER airflow
 
-RUN for whl in /dist/*.whl; do \
-        pip install --no-cache-dir "${whl}[dev]"; \
+RUN set -e; for whl in /dist/*.whl; do \
+        pip install --no-cache-dir "${whl}[airflow]"; \
     done
+
+ENV PYTHONPATH="/opt/airflow:${PYTHONPATH}"
+
+WORKDIR /opt/airflow

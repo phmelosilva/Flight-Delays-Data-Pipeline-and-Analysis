@@ -1,5 +1,7 @@
 *.pyc
 *.pyo
+*.log
+*.tmp
 .DS_Store
 .dockerignore
 .env
@@ -14,3 +16,8 @@ docker-compose.yml
 env/
 venv/
 __pycache__/
+airflow/logs/
+airflow/__pycache__/
+analytics/__pycache__/
+data-layer/
+dw-data/

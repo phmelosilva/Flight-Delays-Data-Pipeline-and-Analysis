@@ -16,7 +16,7 @@ def log_files_metadata(spark: SparkSession, bronze_path: str, processing_date: s
 
     base_path = f"{bronze_path}/{processing_date}"
     fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
-   
+
     PathHadoop = spark._jvm.org.apache.hadoop.fs.Path
 
     format_dirs = fs.listStatus(PathHadoop(base_path))
@@ -25,13 +25,13 @@ def log_files_metadata(spark: SparkSession, bronze_path: str, processing_date: s
     for format_dir_status in format_dirs:
         format_path = format_dir_status.getPath()
         file_format = format_path.getName().upper()
-        
+
         data_files_status = fs.listStatus(format_path)
         for data_file_status in data_files_status:
             data_path_obj = data_file_status.getPath()
             data_path = str(data_path_obj)
             file_name = data_path_obj.getName()
-            
+
             log.info(f"Coletando metadados para: {file_name}")
 
             df = spark.read.format(file_format.lower()).option("header", "true").load(data_path)
@@ -55,10 +55,10 @@ def log_files_metadata(spark: SparkSession, bronze_path: str, processing_date: s
 
     log.info(f"Salvando {len(metadata_list)} registros de metadados...")
     metadata_df = pd.DataFrame(metadata_list)
-    
+
     output_file = Path(output_csv_path)
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     metadata_df.to_csv(output_file, index=False)
-    
+
     log.info("Metadados salvos com sucesso.")

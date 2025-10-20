@@ -1,0 +1,29 @@
+FROM python:3.12-slim
+
+WORKDIR /home/jovyan
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-21-jre-headless \
+    build-essential \
+    git \
+    curl \
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip \
+    && pip install jupyterlab notebook ipykernel jupyterlab-git
+
+COPY pyproject.toml /home/jovyan/
+
+RUN pip install ".[transformer]"
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+ENV PYTHONPATH="/home/jovyan/transformer:${PYTHONPATH}"
+
+EXPOSE 8888

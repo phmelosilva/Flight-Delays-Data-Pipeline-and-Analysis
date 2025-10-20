@@ -80,6 +80,7 @@ services:
   flights_db:
     build:
       context: ./postgres
+      dockerfile: Dockerfile.postgres
     container_name: flights_db
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -242,11 +243,11 @@ services:
     networks:
       - flights_net
 
-  analytics-notebook:
-    container_name: analytics_notebook
+  data_transformer:
+    container_name: data_transformer
     build:
       context: .
-      dockerfile: analytics/Dockerfile.analytics
+      dockerfile: transformer/Dockerfile.transformer
     command: >
       jupyter lab
       --ip=0.0.0.0
@@ -259,7 +260,6 @@ services:
       - "8888:8888"
     volumes:
       - ./data-layer:/home/jovyan/data-layer
-      - ./analytics:/home/jovyan/analytics
       - ./transformer:/home/jovyan/transformer
     restart: always
 
