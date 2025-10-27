@@ -5,7 +5,7 @@ from pendulum import datetime, duration
 from transformer.utils.spark_helpers import get_spark_session, save_to_postgres
 from transformer.utils.postgre_helpers import run_db_validation
 from transformer.utils.quality_gates import run_quality_gates_on_df
-from transformer.transformation import airlines_transformations, airports_transformations, flights_transformations
+from transformer.refinement import airlines_transformations, airports_transformations, flights_transformations
 
 
 @dag(

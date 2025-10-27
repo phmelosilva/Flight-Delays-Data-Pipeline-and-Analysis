@@ -3,7 +3,7 @@ from airflow.decorators import dag, task
 from pendulum import datetime, duration
 from pyspark.sql import SparkSession
 from transformer.utils.check_files_in_folder import check_files_in_folder
-from transformer.ingestion.reassemble_chunks import reassemble_chunks
+from transformer.landing.reassemble_chunks import reassemble_chunks
 from transformer.utils.spark_processing import save_df_as_parquet_file
 from transformer.utils.file_management import move_files, delete_files
 
