@@ -7,6 +7,7 @@ from pathlib import Path
 
 log = LoggingMixin().log
 
+
 def log_files_metadata(spark: SparkSession, bronze_path: str, processing_date: str, output_csv_path: str):
     """
     Inspeciona os arquivos na camada Bronze, coleta metadados (nº de linhas, tamanho)

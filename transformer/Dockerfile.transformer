@@ -22,7 +22,7 @@ COPY pyproject.toml /home/jovyan/
 
 RUN pip install ".[transformer]"
 
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 ENV PYTHONPATH="/home/jovyan/transformer:${PYTHONPATH}"
 

@@ -1,8 +1,13 @@
 from pyspark.sql import SparkSession, DataFrame
-from airflow.utils.log.logging_mixin import LoggingMixin
 
-
-log = LoggingMixin().log
+try:
+    from airflow.utils.log.logging_mixin import LoggingMixin
+    log = LoggingMixin().log
+    AIRFLOW_AVAILABLE = True
+except ModuleNotFoundError:
+    import logging
+    log = logging.getLogger(__name__)
+    AIRFLOW_AVAILABLE = False
 
 def reassemble_chunks(spark: SparkSession, chunk_files: list[str], header: bool = True) -> DataFrame:
     """

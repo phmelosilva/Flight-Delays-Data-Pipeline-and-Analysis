@@ -1,10 +1,8 @@
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.types import DoubleType, IntegerType
+from pyspark.sql.types import DoubleType
 from airflow.utils.log.logging_mixin import LoggingMixin
 from transformer.utils.helpers import to_date_from_ymd
-from transformer.refinement.airlines_transformations import transform_airlines
-from transformer.refinement.airports_transformations import transform_airports
 
 
 log = LoggingMixin().log

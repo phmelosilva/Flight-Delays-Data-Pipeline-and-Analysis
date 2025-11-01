@@ -41,7 +41,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def find_latest_bronze_partition_task(base_path: str) -> str:
-        """Encontra o diretório de partição (YYYY-MM-DD) mais recente na camada Bronze."""
+        """
+        Encontra o diretório de partição (YYYY-MM-DD) mais recente na camada Bronze.
+        """
         pattern = os.path.join(base_path, "*-*-*")
         partitions = glob.glob(pattern)
         if not partitions:
@@ -51,7 +53,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def transform_bronze_airlines_task(latest_partition_date: str, bronze_path: str, silver_path: str) -> str:
-        """Lê, transforma, valida e salva os dados de airlines."""
+        """
+        Lê, transforma, valida e salva os dados de airlines.
+        """
         spark = get_spark_session("TransformAirlines")
         try:
             source_path = f"{bronze_path}/{latest_partition_date}/PARQUET/airlines.parquet"
@@ -67,12 +71,14 @@ def transform_bronze_to_silver_dag():
 
     @task
     def transform_bronze_airports_task(latest_partition_date: str, bronze_path: str, silver_path: str) -> str:
-        """Lê, transforma, valida e salva os dados de airports."""
+        """
+        Lê, transforma, valida e salva os dados de airports.
+        """
         spark = get_spark_session("TransformAirports")
         try:
             source_path = f"{bronze_path}/{latest_partition_date}/PARQUET/airports.parquet"
             dest_path = f"{silver_path}/{latest_partition_date}/PARQUET/airports_silver.parquet"
-            
+
             df = spark.read.parquet(source_path)
             transformed_df = airports_transformations.transform_airports(df)
             run_quality_gates_on_df(transformed_df, ["row_count_not_empty"])
@@ -83,7 +89,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def transform_bronze_flights_task(latest_partition_date: str, bronze_path: str, silver_path: str) -> str:
-        """Lê os dados de flights da partição mais recente, transforma e salva."""
+        """
+        Lê os dados de flights da partição mais recente, transforma e salva.
+        """
         spark = get_spark_session("TransformFlights")
         try:
             source_path = f"{bronze_path}/{latest_partition_date}/PARQUET/flights.parquet"
@@ -99,7 +107,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def aggregate_df_task(flights_path: str, airlines_path: str, airports_path: str, silver_path: str) -> dict:
-        """Lê os arquivos Silver, junta-os, aplica quality gates e salva o resultado final."""
+        """
+        Lê os arquivos silver, junta-os, aplica quality gates e salva o resultado final.
+        """
         spark = get_spark_session("AggregateJoinSilver")
         try:
             latest_partition_date = os.path.basename(os.path.dirname(os.path.dirname(flights_path)))
@@ -118,7 +128,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def load_to_postgres_task(aggregation_result: dict, postgres_conn_id: str):
-        """Carrega o arquivo Parquet final na tabela do PostgreSQL."""
+        """
+        Carrega o arquivo parquet final na tabela "silver".
+        """
         spark = get_spark_session("LoadToPostgres")
         try:
             df = spark.read.parquet(aggregation_result["path"])
@@ -129,7 +141,9 @@ def transform_bronze_to_silver_dag():
 
     @task
     def validate_db_load_task(expected_row_count: int, postgres_conn_id: str):
-        """Verifica se a contagem de linhas no banco de dados corresponde ao esperado."""
+        """
+        Verifica se a contagem de linhas no banco de dados corresponde ao esperado.
+        """
         run_db_validation(
             db_conn_id=postgres_conn_id,
             table_name="silver.flights_silver",

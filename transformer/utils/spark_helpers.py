@@ -1,10 +1,16 @@
 from typing import Optional, Dict
 from pyspark.sql import SparkSession, DataFrame
-from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.utils.log.logging_mixin import LoggingMixin
 
+try:
+    from airflow.providers.postgres.hooks.postgres import PostgresHook
+    from airflow.utils.log.logging_mixin import LoggingMixin
+    log = LoggingMixin().log
+    AIRFLOW_AVAILABLE = True
+except ModuleNotFoundError:
+    import logging
+    log = logging.getLogger(__name__)
+    AIRFLOW_AVAILABLE = False
 
-log = LoggingMixin().log
 
 def get_spark_session(
         app_name: str, 

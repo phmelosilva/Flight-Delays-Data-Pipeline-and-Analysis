@@ -2,10 +2,15 @@ from pathlib import Path
 from pathlib import Path as PythonPath
 from collections import defaultdict
 from pyspark.sql import SparkSession
-from airflow.utils.log.logging_mixin import LoggingMixin
 
-
-log = LoggingMixin().log
+try:
+    from airflow.utils.log.logging_mixin import LoggingMixin
+    log = LoggingMixin().log
+    AIRFLOW_AVAILABLE = True
+except ModuleNotFoundError:
+    import logging
+    log = logging.getLogger(__name__)
+    AIRFLOW_AVAILABLE = False
 
 def move_files(spark: SparkSession, source_files: list[str], base_dest_path: str, processing_date: str) -> None:
     """

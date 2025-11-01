@@ -259,8 +259,11 @@ services:
     ports:
       - "8888:8888"
     volumes:
+      - ./:/opt/airflow
+      - ./data-layer/logs:/opt/airflow/data-layer/logs
       - ./data-layer:/home/jovyan/data-layer
       - ./transformer:/home/jovyan/transformer
+    working_dir: /opt/airflow
     restart: always
 
   dbt:

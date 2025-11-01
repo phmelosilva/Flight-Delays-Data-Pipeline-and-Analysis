@@ -1,5 +1,5 @@
 name: "flights_data_models"
-version: "1.0.0"
+version: "1.0.1"
 config-version: 2
 
 profile: "flights_project"
@@ -18,9 +18,12 @@ clean-targets:
 
 models:
   flights_data_models:
+    +materialized: view
+    +schema: dw
+
     staging:
-      +schema: bronze
+      +tags: ["logical", "bronze"]
     intermediate:
-      +schema: silver
+      +tags: ["logial", "silver"]
     marts:
-      +schema: gold
+      +tags: ["logical", "gold"]

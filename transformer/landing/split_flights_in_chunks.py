@@ -35,10 +35,10 @@ def split_main_file():
         df = pd.read_csv(source_file)
         if df.empty:
             raise ValueError(f"O arquivo '{source_file}' está vazio.")
-        
+
         num_chunks = min(NUM_CHUNKS, len(df))
         chunks = np.array_split(df, num_chunks)
-        
+
         log.info(f"Dividindo em {num_chunks} partes aproximadamente iguais...")
 
         for i, chunk_df in enumerate(chunks, start=1):
