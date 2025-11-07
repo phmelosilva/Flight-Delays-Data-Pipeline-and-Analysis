@@ -92,3 +92,9 @@ Tabela central que armazena os eventos (voos) e suas métricas (medidas) numéri
 | `airline_delay`       | Atraso causado pela companhia aérea (em minutos).                              | `DOUBLE PRECISION`   |       |
 | `late_aircraft_delay` | Atraso causado por aeronave atrasada (em minutos).                             | `DOUBLE PRECISION`   |       |
 | `weather_delay`       | Atraso causado por condições climáticas (em minutos).                          | `DOUBLE PRECISION`   |       |
+
+## Histórico de Versões
+
+| Versão | Data       | Descrição                                              | Autor(es)                                      | Revisor(es)                                      |
+| ------ | ---------- | ------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------ |
+| `1.0`  | 07/11/2025 | Criação inicial do arquivo de mimemônicos do DataWarehouse. | [Pedro Henrique](https://github.com/phmelosilva) | [Joao Schmitz](https://github.com/joaoschmitz) |
