@@ -5,16 +5,18 @@
 -- Data Criação ...........: 09/10/2025
 -- Autor(es) ..............: Júlia Takaki, Matheus Henrique Dos Santos
 -- Banco de Dados .........: PostgreSQL 16
--- Banco de Dados(nome) ...: dw_db
+-- Banco de Dados(nome) ...: dw
 -- 
 -- Últimas alterações:
+--      07/11/2025 => Altera colunas com datas para TIMESTAMP;
+--                 => Adiciona coluna "is_overnight_flight";
 --
--- PROJETO => 01 Base de Dados
---         => 01 Tabelas
+-- PROJETO => 03 Base de Dados
+--         => 05 Tabelas
 --
 -- ------------------------------------------------------------------------------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS silver;
 SET search_path TO silver;
-
 
 CREATE TABLE IF NOT EXISTS flights_silver (
     flight_id INTEGER PRIMARY KEY,
@@ -45,12 +47,12 @@ CREATE TABLE IF NOT EXISTS flights_silver (
     dest_latitude DOUBLE PRECISION,
     dest_longitude DOUBLE PRECISION,
 
-    scheduled_departure DOUBLE PRECISION,
-    departure_time DOUBLE PRECISION,
-    scheduled_arrival DOUBLE PRECISION,
-    arrival_time DOUBLE PRECISION,
-    wheels_off DOUBLE PRECISION,
-    wheels_on DOUBLE PRECISION,
+    scheduled_departure TIMESTAMP,
+    departure_time TIMESTAMP,
+    scheduled_arrival TIMESTAMP,
+    arrival_time TIMESTAMP,
+    wheels_off TIMESTAMP,
+    wheels_on TIMESTAMP,
 
     departure_delay DOUBLE PRECISION,
     arrival_delay DOUBLE PRECISION,
@@ -60,6 +62,8 @@ CREATE TABLE IF NOT EXISTS flights_silver (
     elapsed_time DOUBLE PRECISION,
     scheduled_time DOUBLE PRECISION,
     distance DOUBLE PRECISION,
+
+    is_overnight_flight BOOLEAN NOT NULL DEFAULT FALSE,
 
     air_system_delay DOUBLE PRECISION DEFAULT 0,
     security_delay DOUBLE PRECISION DEFAULT 0,
@@ -76,3 +80,6 @@ CREATE INDEX IF NOT EXISTS idx_flights_airline_iata
 
 CREATE INDEX IF NOT EXISTS idx_flights_origin_dest
     ON silver.flights_silver (origin_airport_iata_code, dest_airport_iata_code);
+
+CREATE INDEX IF NOT EXISTS idx_flights_dates
+    ON silver.flights_silver (departure_time, arrival_time);

@@ -7,8 +7,12 @@
 -- Banco de Dados .........: PostgreSQL 16
 -- Banco de Dados(nome) ...: dw
 --
+-- Últimas alterações:
+--      07/11/2025 => Altera colunas com datas para TIMESTAMP;
+--                 => Adiciona coluna "is_overnight_flight";
+--
 -- PROJETO => 03 Base de Dados
---         => 04 Tabelas
+--         => 05 Tabelas
 --
 -- ---------------------------------------------------------------------------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS gold;
@@ -53,12 +57,12 @@ CREATE TABLE IF NOT EXISTS fato_flights (
     origin_airport_id INTEGER NOT NULL,
     dest_airport_id INTEGER NOT NULL,
 
-    scheduled_departure DOUBLE PRECISION,
-    departure_time DOUBLE PRECISION,
-    scheduled_arrival DOUBLE PRECISION,
-    arrival_time DOUBLE PRECISION,
-    wheels_off DOUBLE PRECISION,
-    wheels_on DOUBLE PRECISION,
+    scheduled_departure TIMESTAMP,
+    departure_time TIMESTAMP,
+    scheduled_arrival TIMESTAMP,
+    arrival_time TIMESTAMP,
+    wheels_off TIMESTAMP,
+    wheels_on TIMESTAMP,
 
     distance DOUBLE PRECISION,
     air_time DOUBLE PRECISION,
@@ -68,6 +72,8 @@ CREATE TABLE IF NOT EXISTS fato_flights (
     taxi_in DOUBLE PRECISION,
     departure_delay DOUBLE PRECISION,
     arrival_delay DOUBLE PRECISION,
+
+    is_overnight_flight BOOLEAN NOT NULL DEFAULT FALSE,
 
     air_system_delay DOUBLE PRECISION DEFAULT 0,
     security_delay DOUBLE PRECISION DEFAULT 0,
