@@ -2,11 +2,11 @@
 .ipynb_checkpoints
 .venv/
 .pytest_cache
-/airflow/logs
 /airflow/config
+/airflow/logs
 /data-layer/bronze
-/data-layer/gold
 /data-layer/silver
+/data-layer/gold
 /dev
 /dw-data
 __pycache__/

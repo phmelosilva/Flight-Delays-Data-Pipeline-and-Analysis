@@ -31,11 +31,13 @@
 # Feel free to modify this file to suit your needs.
 ---
 x-airflow-common: &airflow-common
+  env_file:
+    - .env
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW_CONN_FLIGHTS_DB: "postgresql://${DB_USER}:${DB_PASSWORD}@flights_db:5432/${DB_NAME}"
+    AIRFLOW_CONN_DW: "postgresql://${DB_USER}:${DB_PASSWORD}@dw:5432/${DB_NAME}"
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:-}
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
@@ -52,7 +54,6 @@ x-airflow-common: &airflow-common
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/data-layer:/opt/airflow/data-layer
     - ./transformer:/opt/airflow/transformer
-    - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     postgres:
@@ -77,11 +78,12 @@ services:
     networks:
       - flights_net
 
-  flights_db:
+  dw:
     build:
       context: ./postgres
       dockerfile: Dockerfile.postgres
-    container_name: flights_db
+    image: data_warehouse:latest
+    container_name: data_warehouse
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -244,6 +246,7 @@ services:
       - flights_net
 
   data_transformer:
+    image: data_transformer:latest
     container_name: data_transformer
     build:
       context: .
@@ -260,17 +263,18 @@ services:
       - "8888:8888"
     volumes:
       - ./:/opt/airflow
-      - ./data-layer/logs:/opt/airflow/data-layer/logs
       - ./data-layer:/home/jovyan/data-layer
       - ./transformer:/home/jovyan/transformer
     working_dir: /opt/airflow
     restart: always
+    networks:
+      - flights_net
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     container_name: dbt_runner
     depends_on:
-      - flights_db
+      - dw
     environment:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -287,4 +291,5 @@ volumes:
 
 networks:
   flights_net:
+    name: flights_net
     driver: bridge
