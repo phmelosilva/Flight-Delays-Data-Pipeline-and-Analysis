@@ -46,7 +46,6 @@ x-airflow-common: &airflow-common
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     AIRFLOW_CONFIG: "/opt/airflow/config/airflow.cfg"
-    PYTHONPATH: "/opt/airflow:${PYTHONPATH}"
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/logs:/opt/airflow/logs
@@ -80,8 +79,8 @@ services:
 
   dw:
     build:
-      context: ./postgres
-      dockerfile: Dockerfile.postgres
+      context: .
+      dockerfile: docker/postgres/Dockerfile.postgres
     image: data_warehouse:latest
     container_name: data_warehouse
     environment:
@@ -176,7 +175,9 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
-    build: .
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
     container_name: airflow_scheduler
     env_file:
       - .env
@@ -197,7 +198,9 @@ services:
 
   airflow-dag-processor:
     <<: *airflow-common
-    build: .
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
     container_name: airflow_dag_processor
     env_file:
       - .env
@@ -246,26 +249,27 @@ services:
       - flights_net
 
   data_transformer:
+    env_file:
+      - .env
     image: data_transformer:latest
     container_name: data_transformer
     build:
       context: .
-      dockerfile: transformer/Dockerfile.transformer
+      dockerfile: docker/jupyter/Dockerfile.transformer
     command: >
       jupyter lab
-      --ip=0.0.0.0
-      --no-browser
-      --allow-root
-      --NotebookApp.token=''
-      --NotebookApp.password=''
-      --notebook-dir=/home/jovyan
+        --ip=0.0.0.0
+        --no-browser
+        --allow-root
+        --ServerApp.token=''
+        --ServerApp.password=''
+        --notebook-dir=/opt/airflow/transformer
     ports:
       - "8888:8888"
     volumes:
-      - ./:/opt/airflow
-      - ./data-layer:/home/jovyan/data-layer
-      - ./transformer:/home/jovyan/transformer
-    working_dir: /opt/airflow
+      - ./transformer:/opt/airflow/transformer
+      - ./data-layer:/opt/airflow/data-layer
+    working_dir: /opt/airflow/transformer
     restart: always
     networks:
       - flights_net

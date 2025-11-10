@@ -10,6 +10,9 @@
 -- Últimas alterações:
 --      07/11/2025 => Altera colunas com datas para TIMESTAMP;
 --                 => Adiciona coluna "is_overnight_flight";
+--                 => Corrige tipo do atributo "flight_id" e padroniza DDL;
+--
+--      09/11/2025 => Corrige tipo do atributo "flight_id" e padroniza DDL;
 --
 -- PROJETO => 03 Base de Dados
 --         => 05 Tabelas
@@ -19,12 +22,11 @@ CREATE SCHEMA IF NOT EXISTS silver;
 SET search_path TO silver;
 
 CREATE TABLE IF NOT EXISTS flights_silver (
-    flight_id INTEGER PRIMARY KEY,
+    flight_id BIGINT,
     flight_year SMALLINT NOT NULL,
     flight_month SMALLINT NOT NULL,
     flight_day SMALLINT NOT NULL,
     flight_day_of_week SMALLINT NOT NULL,
-
     flight_date DATE NOT NULL,
 
     airline_iata_code VARCHAR(3) NOT NULL,
@@ -72,14 +74,16 @@ CREATE TABLE IF NOT EXISTS flights_silver (
     weather_delay DOUBLE PRECISION DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS idx_flights_flight_date
-    ON silver.flights_silver (flight_date);
+ALTER TABLE flights_silver ADD CONSTRAINT pk_flights_silver 
+    PRIMARY KEY (flight_id);
 
-CREATE INDEX IF NOT EXISTS idx_flights_airline_iata
-    ON silver.flights_silver (airline_iata_code);
+CREATE INDEX IF NOT EXISTS idx_flights_silver_date 
+    ON flights_silver (flight_date);
+CREATE INDEX IF NOT EXISTS idx_flights_silver_airline 
+    ON flights_silver (airline_iata_code);
+CREATE INDEX IF NOT EXISTS idx_flights_silver_origin_dest 
+    ON flights_silver (origin_airport_iata_code, dest_airport_iata_code);
+CREATE INDEX IF NOT EXISTS idx_flights_silver_times 
+    ON flights_silver (departure_time, arrival_time);
 
-CREATE INDEX IF NOT EXISTS idx_flights_origin_dest
-    ON silver.flights_silver (origin_airport_iata_code, dest_airport_iata_code);
-
-CREATE INDEX IF NOT EXISTS idx_flights_dates
-    ON silver.flights_silver (departure_time, arrival_time);
+COMMENT ON SCHEMA silver IS 'Modelagem OBT para a camada silver.';

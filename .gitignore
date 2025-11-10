@@ -2,6 +2,7 @@
 .ipynb_checkpoints
 .venv/
 .pytest_cache
+.Trash-0
 /airflow/config
 /airflow/logs
 /data-layer/bronze

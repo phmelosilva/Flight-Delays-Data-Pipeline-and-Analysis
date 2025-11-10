@@ -8,8 +8,15 @@
 -- Banco de Dados(nome) ...: dw
 --
 -- Últimas alterações:
---      07/11/2025 => Altera colunas com datas para TIMESTAMP;
---                 => Adiciona coluna "is_overnight_flight";
+--      08/11/2025 => Altera atributos com datas para TIMESTAMP;
+--                 => Adiciona atributo "is_overnight_flight" na tabela "fato_flights";
+--                 => Remove atributo "date_id" da tabela "dim_date";
+--                 => Altera modelagem nas tabelas "dim_date" e "fato_flights";
+--
+--      09/11/2025 => Remove atributo 'date_id' da tabela 'dim_date';
+--                 => Altera modelagem nas tabelas 'dim_date' e 'fato_flights';
+--                 => Adiciona CASCADE para operações de DELETE e UPDATE;
+--                 => Corrige tipos dos atributos 'airport_id', 'airline_id' e 'flight_id';
 --
 -- PROJETO => 03 Base de Dados
 --         => 05 Tabelas
@@ -20,7 +27,7 @@ SET search_path TO gold;
 
 -- Tabelas --
 CREATE TABLE IF NOT EXISTS dim_airport (
-    airport_id SERIAL,
+    airport_id BIGSERIAL,
     airport_iata_code VARCHAR(3) UNIQUE NOT NULL,
     airport_name VARCHAR(100) NOT NULL,
     
@@ -34,14 +41,13 @@ CREATE TABLE IF NOT EXISTS dim_airport (
 );
 
 CREATE TABLE IF NOT EXISTS dim_airline (
-    airline_id SERIAL,
+    airline_id BIGSERIAL,
     airline_iata_code VARCHAR(3) UNIQUE NOT NULL,
     airline_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS dim_date (
-    date_id SERIAL,
-    full_date DATE UNIQUE NOT NULL,
+    full_date DATE,
     year SMALLINT NOT NULL,
     month SMALLINT NOT NULL,
     day SMALLINT NOT NULL,
@@ -51,11 +57,11 @@ CREATE TABLE IF NOT EXISTS dim_date (
 );
 
 CREATE TABLE IF NOT EXISTS fato_flights (
-    flight_id INTEGER,
-    date_id INTEGER NOT NULL,
-    airline_id INTEGER NOT NULL,
-    origin_airport_id INTEGER NOT NULL,
-    dest_airport_id INTEGER NOT NULL,
+    flight_id BIGINT,
+    full_date DATE NOT NULL,
+    airline_id BIGINT NOT NULL,
+    origin_airport_id BIGINT NOT NULL,
+    dest_airport_id BIGINT NOT NULL,
 
     scheduled_departure TIMESTAMP,
     departure_time TIMESTAMP,
@@ -85,25 +91,28 @@ CREATE TABLE IF NOT EXISTS fato_flights (
 -- Chaves Primárias (PKs) --
 ALTER TABLE dim_airport ADD CONSTRAINT pk_dim_airport PRIMARY KEY (airport_id);
 ALTER TABLE dim_airline ADD CONSTRAINT pk_dim_airline PRIMARY KEY (airline_id);
-ALTER TABLE dim_date ADD CONSTRAINT pk_dim_date PRIMARY KEY (date_id);
+ALTER TABLE dim_date ADD CONSTRAINT pk_dim_date PRIMARY KEY (full_date);
 ALTER TABLE fato_flights ADD CONSTRAINT pk_fato_flights PRIMARY KEY (flight_id);
 
 -- Chaves Estrangeiras (FKs) --
-ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_date_id
-    FOREIGN KEY (date_id) REFERENCES dim_date(date_id);
+ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_full_date
+    FOREIGN KEY (full_date) REFERENCES dim_date(full_date)
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_airline_id
-    FOREIGN KEY (airline_id) REFERENCES dim_airline(airline_id);
+    FOREIGN KEY (airline_id) REFERENCES dim_airline(airline_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_origin_airport_id
-    FOREIGN KEY (origin_airport_id) REFERENCES dim_airport(airport_id);
+    FOREIGN KEY (origin_airport_id) REFERENCES dim_airport(airport_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_dest_airport_id
-    FOREIGN KEY (dest_airport_id) REFERENCES dim_airport(airport_id);
-
+    FOREIGN KEY (dest_airport_id) REFERENCES dim_airport(airport_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Índices para acelerar os JOINs da Fato com as Dimensões --
-CREATE INDEX IF NOT EXISTS idx_flights_date ON fato_flights(date_id);
+CREATE INDEX IF NOT EXISTS idx_flights_date ON fato_flights(full_date);
 CREATE INDEX IF NOT EXISTS idx_flights_airline ON fato_flights(airline_id);
 CREATE INDEX IF NOT EXISTS idx_flights_origin ON fato_flights(origin_airport_id);
 CREATE INDEX IF NOT EXISTS idx_flights_dest ON fato_flights(dest_airport_id);
