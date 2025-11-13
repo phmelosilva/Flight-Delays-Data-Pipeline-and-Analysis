@@ -1,4 +1,3 @@
-import os
 from airflow.decorators import dag
 from airflow.providers.papermill.operators.papermill import PapermillOperator
 from airflow.operators.bash import BashOperator

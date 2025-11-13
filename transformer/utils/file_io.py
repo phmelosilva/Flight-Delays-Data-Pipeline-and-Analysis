@@ -9,7 +9,7 @@ log = get_logger("file_io")
 
 def find_partition(base_path: str, mode: str = "latest", date_str: str | None = None) -> str:
     """
-    Localiza e retorna o nome da partição de data a ser utilizada (ex: '2025-11-08').
+    Localiza e retorna o nome da partição de data a ser utilizada (ex: '2025-01-01').
 
     Se mode="latest", busca automaticamente a pasta mais recente no formato YYYY-MM-DD.
     Se mode="date", valida e retorna o valor informado em `date_str`.

@@ -93,61 +93,6 @@ def load_to_postgres(
         log.error(f"[ERROR] Falha ao carregar dados no PostgreSQL ({table_name}): {e}.")
         raise
 
-def save_df_as_parquet_file(
-    df: DataFrame,
-    dest_path: str,
-    filename: str,
-    single_file: bool = False,
-) -> str:
-    """
-    Salva um Dataframe Spark em formato Parquet.Caso `single_file=True`, 
-    consolida o Dataframe em um único arquivo antes de salvar.
-
-    Args:
-        df (DataFrame): Dataframe Spark a ser salvo.
-        dest_path (str): Caminho base do diretório de destino.
-        filename (str): Nome do arquivo/parquet.
-        single_file (bool): Se True, coalesce para único arquivo antes de salvar.
-
-    Returns:
-        str: Caminho completo do diretório salvo.
-
-    Raises:
-        IOError: Caso ocorra erro ao salvar o arquivo.
-    """
-    final_output_dir = f"{dest_path}/{filename}"
-
-    # Criação de referência ao FileSystem Hadoop
-    fs = df.sparkSession._jvm.org.apache.hadoop.fs.FileSystem.get(
-        df.sparkSession._jsc.hadoopConfiguration()
-    )
-    HPath = df.sparkSession._jvm.org.apache.hadoop.fs.Path
-
-    # Limpeza do diretório de saída, se já existir
-    if fs.exists(HPath(final_output_dir)):
-        try:
-            if fs.delete(HPath(final_output_dir), True):
-                log.info(f"[INFO] Diretório existente ({final_output_dir}) removido.")
-            else:
-                raise IOError(f"[ERROR] Falha ao limpar diretório existente.")
-        except Exception as e:
-            log.error(f"[ERROR] Erro ao limpar diretório '{final_output_dir}': {e}.")
-            raise
-
-    # Escrita do Dataframe em parquet
-    try:
-        # Consolida em único arquivo
-        df_to_write = df.coalesce(1) if single_file else df
-        df_to_write.write.mode("overwrite").parquet(final_output_dir)
-
-        log.info(f"[INFO] Dataframe salvo com sucesso em '{final_output_dir}'.")
-
-        return final_output_dir
-
-    except Exception as e:
-        log.error(f"[ERROR] Falha ao salvar Dataframe em '{final_output_dir}': {e}.")
-        raise
-
 def get_spark_session(
     app_name: str,
     master: str = "local[*]",
@@ -176,6 +121,12 @@ def get_spark_session(
             .appName(app_name)
             .master(master)
             .config("spark.jars.packages", "org.postgresql:postgresql:42.7.3")
+            .config("spark.sql.codegen.wholeStage", "true")
+            .config("spark.sql.shuffle.partitions", "4")
+            .config("spark.sql.debug.maxToStringFields", "50")
+            .config("spark.executor.extraJavaOptions", "-Xlog:disable")
+            .config("spark.driver.extraJavaOptions", "-Xlog:disable")
+            .config("spark.sql.adaptive.enabled", "false")
         )
 
         # Aplicação de configurações adicionais
@@ -186,6 +137,14 @@ def get_spark_session(
         # Criação da sessão e configuração de logs
         spark = builder.getOrCreate()
         spark.sparkContext.setLogLevel("WARN")
+
+        log4j = spark._jvm.org.apache.log4j
+        log4j.LogManager.getLogger("org.codehaus.janino").setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getLogger("org.codehaus.commons.compiler").setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getLogger("org.apache.spark.sql.catalyst.expressions.codegen").setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getLogger("org.apache.spark.sql.catalyst.expressions.codegen.CodeGenerator").setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getLogger("org.apache.spark.sql.execution").setLevel(log4j.Level.ERROR)
+        log4j.LogManager.getLogger("org.apache.spark.sql.execution.WholeStageCodegenExec").setLevel(log4j.Level.ERROR)
 
         log.info(f"[INFO] SparkSession criada com sucesso: '{app_name}' (master={master}).")
 
