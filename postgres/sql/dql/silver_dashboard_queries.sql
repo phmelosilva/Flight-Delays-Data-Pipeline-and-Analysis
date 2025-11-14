@@ -5,7 +5,7 @@
 -- Data Criação ...........: 04/11/2025
 -- Autor(es) ..............: Pedro Henrique da Silva Melo
 -- Banco de Dados .........: PostgreSQL 16
--- Banco de Dados(nome) ...: dw_db
+-- Banco de Dados(nome) ...: dw
 -- 
 -- Objetivo ...............: Consultas para alimentar o Dashboard de Performance de Voos.
 -- Tabela Principal .......: silver.flights_silver

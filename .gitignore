@@ -11,3 +11,5 @@ __pycache__/
 transformer/dbt/dbt_packages/
 transformer/dbt/logs/
 transformer/dbt/target/
+data-layer/raw/stage
+.vscode
