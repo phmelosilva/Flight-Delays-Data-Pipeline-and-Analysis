@@ -5,9 +5,6 @@
 .Trash-0
 /airflow/config
 /airflow/logs
-/data-layer/bronze
-/data-layer/silver
-/data-layer/gold
 /dev
 /dw-data
 __pycache__/
