@@ -78,10 +78,7 @@ services:
       - flights_net
 
   dw:
-    build:
-      context: .
-      dockerfile: docker/postgres/Dockerfile.postgres
-    image: data_warehouse:latest
+    image: postgres:16
     container_name: data_warehouse
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -89,7 +86,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./dw-data:/var/lib/postgresql/data
-      - ./data-layer/silver/000_create_schemas.sql:/docker-entrypoint-initdb.d/000_create_schemas.sql
+      - ./data-layer/bronze/000_create_schemas.sql:/docker-entrypoint-initdb.d/000_create_schemas.sql
       - ./data-layer/silver/001_create_table_silver.sql:/docker-entrypoint-initdb.d/001_create_table_silver.sql
       - ./data-layer/gold/002_create_table_gold.sql:/docker-entrypoint-initdb.d/002_create_table_gold.sql
     ports:

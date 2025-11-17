@@ -10,7 +10,7 @@ COPY . .
 RUN python -m build --wheel --outdir dist
 
 # Final
-FROM apache/airflow:3.0.6
+FROM apache/airflow:3.1.3-python3.12
 
 USER root
 
