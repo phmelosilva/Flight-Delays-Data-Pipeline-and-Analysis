@@ -1,14 +1,14 @@
 from pyspark.sql import DataFrame, functions as F
 from transformer.utils.logger import get_logger
 
-log = get_logger("quality_gates.silver_flights")
+log = get_logger("quality_gates_silver_flights")
 
 
 # Verificação de dataset não vazio
 def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
     if df.rdd.isEmpty():
         raise ValueError(f"[Quality] {name}: dataset vazio.")
-    log.info(f"[Quality] {name}: dataset não vazio OK.")
+    log.info(f"[Quality]                _check_row_count_not_empty: OK")
 
 
 # Partida antes da chegada
@@ -21,7 +21,7 @@ def _check_departure_before_arrival(df: DataFrame, name: str) -> None:
     if invalid > 0:
         raise ValueError(f"[Quality] {name}: {invalid:,} voos com partida >= chegada.")
 
-    log.info(f"[Quality] {name}: horários de partida/chegada OK.")
+    log.info(f"[Quality]                _check_departure_before_arrival: OK")
 
 
 # Origem e destino diferentes
@@ -34,7 +34,7 @@ def _check_origin_dest_different(df: DataFrame, name: str) -> None:
     if same > 0:
         raise ValueError(f"[Quality] {name}: {same:,} voos com origem == destino.")
 
-    log.info(f"[Quality] {name}: colunas de origem/destino OK.")
+    log.info(f"[Quality]                _check_origin_dest_different: OK")
 
 
 # Distância positiva
@@ -43,7 +43,7 @@ def _check_positive_distance(df: DataFrame, name: str) -> None:
     if invalid > 0:
         raise ValueError(f"[Quality] {name}: {invalid:,} voos com distância não positiva.")
 
-    log.info(f"[Quality] {name}: distâncias positivas OK.")
+    log.info(f"[Quality]                _check_positive_distance: OK")
 
 
 # Consistência dos atrasos
@@ -68,7 +68,7 @@ def _check_delay_consistency(df: DataFrame, name: str) -> None:
     if inconsistent > 0:
         raise ValueError(f"[Quality] {name}: {inconsistent:,} atrasos inconsistentes.")
 
-    log.info(f"[Quality] {name}: consistência dos atrasos OK.")
+    log.info(f"[Quality]                _check_delay_consistency: OK")
 
 
 # Integridade referencial
@@ -94,7 +94,7 @@ def _check_referential_integrity(
             f"não encontradas em {right_name}.{right_key}."
         )
 
-    log.info(f"[Quality] {left_name}: integridade FK '{left_key}' → {right_name}.{right_key} OK.")
+    log.info(f"[Quality]                _check_referential_integrity: OK")
 
 
 # Executor
@@ -102,32 +102,52 @@ def run_quality_gates_silver_flights(
     flights_df: DataFrame,
     airports_df: DataFrame,
 ) -> None:
-    log.info("[Quality] Iniciando validações da camada silver.")
+    spark = flights_df.sparkSession
+    spark.conf.set("spark.sql.codegen.wholeStage", "false")
 
-    _check_row_count_not_empty(flights_df, "flights_silver")
-    _check_departure_before_arrival(flights_df, "flights_silver")
-    _check_origin_dest_different(flights_df, "flights_silver")
-    _check_positive_distance(flights_df, "flights_silver")
-    _check_delay_consistency(flights_df, "flights_silver")
+    # Seleciona apenas as colunas necessárias para quality
+    flights_tmp = flights_df.select(
+        "departure_time","arrival_time",
+        "origin_airport","destination_airport",
+        "distance","arrival_delay",
+        "air_system_delay","security_delay",
+        "airline_delay","late_aircraft_delay","weather_delay"
+    ).cache()
 
-    # Validação fk origem -> aeroporto
+    airports_tmp = airports_df.select("airport_iata_code").cache()
+
+    # Materializa
+    flights_tmp.count()
+    airports_tmp.count()
+
+    # Quality gates
+    _check_row_count_not_empty(flights_tmp, "flights_silver")
+    _check_departure_before_arrival(flights_tmp, "flights_silver")
+    _check_origin_dest_different(flights_tmp, "flights_silver")
+    _check_positive_distance(flights_tmp, "flights_silver")
+    _check_delay_consistency(flights_tmp, "flights_silver")
+
+    # Integridade referencial: origem
     _check_referential_integrity(
-        flights_df,
-        airports_df,
+        flights_tmp,
+        airports_tmp,
         left_key="origin_airport",
         right_key="airport_iata_code",
         left_name="flights_silver",
         right_name="airports_silver",
     )
 
-    # Validação fk destino -> aeroporto
+    # Integridade referencial: destino
     _check_referential_integrity(
-        flights_df,
-        airports_df,
+        flights_tmp,
+        airports_tmp,
         left_key="destination_airport",
         right_key="airport_iata_code",
         left_name="flights_silver",
         right_name="airports_silver",
     )
 
-    log.info("[Quality] Todas as validações da silver concluídas com sucesso.")
+    flights_tmp.unpersist()
+    airports_tmp.unpersist()
+
+    spark.conf.set("spark.sql.codegen.wholeStage", "true")

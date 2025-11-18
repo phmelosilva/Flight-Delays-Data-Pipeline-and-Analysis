@@ -2,10 +2,9 @@ from pyspark.sql import DataFrame, functions as F
 from typing import List
 from transformer.utils.logger import get_logger
 
-log = get_logger("quality_gates.silver_base")
+log = get_logger("quality_gates_silver_base")
 
 
-# Dataset não vazio
 def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
     """
     Valida que o DataFrame contém pelo menos um registro.
@@ -13,9 +12,8 @@ def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
     if df.rdd.isEmpty():
         raise ValueError(f"[Quality][Refinement] {name}: dataset vazio.")
 
-    log.info(f"[Quality][Refinement] {name}: dataset não vazio OK.")
+    log.info(f"[Quality][Refinement]    _check_row_count_not_empty: OK")
 
-# Validação de colunas obrigatórias
 def _check_schema_columns(df: DataFrame, required_columns: List[str], name: str) -> None:
     """
     Confirma que todas as colunas obrigatórias estão presentes no DataFrame.
@@ -24,9 +22,8 @@ def _check_schema_columns(df: DataFrame, required_columns: List[str], name: str)
     if missing:
         raise ValueError(f"[Quality][Refinement] {name}: colunas ausentes {missing}.")
 
-    log.info(f"[Quality][Refinement] {name}: schema contém todas as colunas obrigatórias.")
+    log.info(f"[Quality][Refinement]    _check_schema_columns: OK")
 
-# Chave primária não nula
 def _check_no_null_primary_key(df: DataFrame, pk_columns: List[str], name: str) -> None:
     """
     Garante que as colunas de chave primária não possuam valores nulos.
@@ -36,9 +33,8 @@ def _check_no_null_primary_key(df: DataFrame, pk_columns: List[str], name: str) 
     if invalid > 0:
         raise ValueError(f"[Quality][Refinement] {name}: {invalid:,} registros com PK nula.")
 
-    log.info(f"[Quality][Refinement] {name}: colunas PK sem nulos OK.")
+    log.info(f"[Quality][Refinement]    _check_no_null_primary_key: OK")
 
-# Chave primária única
 def _check_unique_primary_key(df: DataFrame, pk_columns: List[str], name: str) -> None:
     """
     Valida que a chave primária é única dentro do dataset.
@@ -52,9 +48,8 @@ def _check_unique_primary_key(df: DataFrame, pk_columns: List[str], name: str) -
     if dup_count > 0:
         raise ValueError(f"[Quality][Refinement] {name}: {dup_count:,} duplicatas encontradas na pk.")
 
-    log.info(f"[Quality][Refinement] {name}: unicidade da pk -> OK.")
+    log.info(f"[Quality][Refinement]    _check_unique_primary_key: OK")
 
-# Linhas duplicadas completas
 def _check_no_full_duplicates(df: DataFrame, name: str) -> None:
     """
     Verifica se não existem registros completamente duplicados.
@@ -63,10 +58,9 @@ def _check_no_full_duplicates(df: DataFrame, name: str) -> None:
     if dup_rows > 0:
         raise ValueError(f"[Quality][Refinement] {name}: {dup_rows:,} linhas duplicadas completas.")
 
-    log.info(f"[Quality][Refinement] {name}: sem duplicatas completas.")
+    log.info(f"[Quality][Refinement]    _check_no_full_duplicates: OK")
 
 
-# Executor principal
 def run_quality_gates_silver_base(
     df: DataFrame,
     name: str,
@@ -93,4 +87,4 @@ def run_quality_gates_silver_base(
     _check_unique_primary_key(df, pk_columns, name)
     _check_no_full_duplicates(df, name)
 
-    log.info(f"[Quality][Refinement] Todas as validações para '{name}' concluídas com sucesso.")
+    log.info(f"[Quality][Refinement] Validações para '{name}' concluídas.")

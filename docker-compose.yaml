@@ -52,7 +52,7 @@ x-airflow-common: &airflow-common
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/data-layer:/opt/airflow/data-layer
-    - ./transformer:/opt/airflow/transformer
+    - ${AIRFLOW_PROJ_DIR:-.}/transformer:/opt/airflow/transformer
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     postgres:
@@ -266,8 +266,8 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./transformer:/opt/airflow/transformer
       - ./data-layer:/opt/airflow/data-layer
+      - ./transformer:/opt/airflow/transformer
     working_dir: /opt/airflow/transformer
     restart: always
     networks:

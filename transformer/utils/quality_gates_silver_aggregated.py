@@ -1,7 +1,7 @@
 from pyspark.sql import DataFrame, functions as F
 from transformer.utils.logger import get_logger
 
-log = get_logger("quality_gates.silver_aggregated")
+log = get_logger("quality_gates_silver_aggregated")
 
 
 def _check_row_count_not_empty(df: DataFrame) -> None:

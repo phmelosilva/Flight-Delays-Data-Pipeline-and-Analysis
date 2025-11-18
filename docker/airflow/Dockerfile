@@ -5,7 +5,8 @@ RUN pip install --upgrade pip build
 
 WORKDIR /src
 
-COPY . .
+COPY pyproject.toml .
+COPY transformer ./transformer
 
 RUN python -m build --wheel --outdir dist
 
@@ -16,10 +17,6 @@ USER root
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        openjdk-17-jre-headless \
-        build-essential \
-        git \
-        curl \
         ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 

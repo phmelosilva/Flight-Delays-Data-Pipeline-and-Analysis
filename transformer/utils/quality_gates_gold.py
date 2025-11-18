@@ -21,7 +21,7 @@ def _check_unique(df: DataFrame, column: str, name: str) -> None:
     if duplicates.count() > 0:
         raise ValueError(f"[Quality] {name}: valores duplicados em '{column}'.")
 
-    log.info(f"[Quality] {name}: unicidade de '{column}' OK.")
+    log.info(f"[Quality]                _check_unique: '{column}' OK.")
 
 
 # Verificação de valores nulos
@@ -42,7 +42,7 @@ def _check_no_nulls(df: DataFrame, columns: list[str], name: str) -> None:
         if nulls.count() > 0:
             raise ValueError(f"[Quality] {name}: valores nulos encontrados em '{c}'.")
 
-    log.info(f"[Quality] {name}: sem valores nulos nas colunas críticas.")
+    log.info(f"[Quality]                _check_no_nulls: {name} OK.")
 
 # Verificação de integridade referencial
 def _check_fk_integrity(
@@ -82,7 +82,7 @@ def _check_fk_integrity(
             f"{fact_name}.{fk_col} não encontradas em {dim_name}.{dim_col}."
         )
 
-    log.info(f"[Quality] {fact_name}: integridade de fk '{fk_col}' -> {dim_name}.{dim_col} - OK.")
+    log.info(f"[Quality]                _check_fk_integrity: [{fact_name}] '{fk_col}' <---> '{dim_name}.{dim_col}' OK.")
 
 
 # Executor principal
@@ -104,15 +104,15 @@ def run_quality_gates_gold(
     Raises:
         ValueError: Se qualquer verificação de qualidade falhar.
     """
-    log.info("[Quality] Iniciando validações...")
+    log.info("[Quality] Iniciando validações.")
 
-    # Unicidade das PKs e naturais
+    # Unicidade das pks e naturais
     _check_unique(dim_airline, "airline_iata_code", "dim_airline")
     _check_unique(dim_airport, "airport_iata_code", "dim_airport")
     _check_unique(dim_date, "full_date", "dim_date")
     _check_unique(fato_flights, "flight_id", "fato_flights")
 
-    # Ausência de nulos nas FKs
+    # Ausência de nulos nas fks
     fk_cols = ["airline_id", "origin_airport_id", "dest_airport_id", "full_date"]
     _check_no_nulls(fato_flights, fk_cols, "fato_flights")
 

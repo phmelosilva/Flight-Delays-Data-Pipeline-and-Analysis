@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airflow-transformers"
-version = "0.2.1"
+version = "1.0.0"
 description = "Transformers para serem utilizados pelas pipelines do projeto."
 license = { text = "MIT" }
 authors = [
@@ -18,10 +18,7 @@ dependencies = []
 airflow = [
     "apache-airflow-providers-docker==4.3.0",
     "apache-airflow-providers-papermill==3.11.3",
-    "apache-airflow-providers-postgres==6.4.0",
-    "papermill==2.6.0",
-    "pyspark==3.5.3",
-    "pyarrow==17.0.0"
+    "apache-airflow-providers-postgres==6.4.0"
 ]
 
 dbt = [
@@ -30,11 +27,12 @@ dbt = [
 ]
 
 transformer = [
-    "pyspark==3.5.3",
-    "pandas==2.3.2",
-    "pyarrow==17.0.0",
-    "psycopg2-binary==2.9.10",
     "matplotlib==3.10.6",
+    "pandas==2.3.2",
+    "papermill==2.6.0",
+    "psycopg2-binary==2.9.10",
+    "pyarrow==17.0.0",
+    "pyspark==3.5.3",
     "seaborn==0.13.2",
     "scikit-learn==1.7.2"
 ]

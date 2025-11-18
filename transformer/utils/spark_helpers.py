@@ -122,11 +122,13 @@ def get_spark_session(
             .master(master)
             .config("spark.jars.packages", "org.postgresql:postgresql:42.7.3")
             .config("spark.sql.codegen.wholeStage", "true")
-            .config("spark.sql.shuffle.partitions", "4")
+            .config("spark.sql.codegen.splitExpressions", "true")
+            .config("spark.sql.codegen.maxFields", "150")
+            .config("spark.sql.adaptive.enabled", "true")
+            .config("spark.sql.shuffle.partitions", "8")
             .config("spark.sql.debug.maxToStringFields", "50")
             .config("spark.executor.extraJavaOptions", "-Xlog:disable")
             .config("spark.driver.extraJavaOptions", "-Xlog:disable")
-            .config("spark.sql.adaptive.enabled", "false")
         )
 
         # Aplicação de configurações adicionais

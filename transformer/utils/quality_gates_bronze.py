@@ -20,7 +20,7 @@ def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
     if df.rdd.isEmpty():
         raise ValueError(f"[Quality][Landing] O dataset '{name}' está vazio.")
 
-    log.info(f"[Quality][Landing] _check_row_count_not_empty para '{name}': OK.")
+    log.info(f"[Quality][Landing]       _check_row_count_not_empty: OK")
 
 
 # Schema Validation
@@ -40,7 +40,7 @@ def _check_schema_columns(df: DataFrame, required_columns: List[str], name: str)
     if missing:
         raise ValueError(f"[Quality][Landing] '{name}' possui colunas ausentes: {missing}.")
 
-    log.info(f"[Quality][Landing] _check_schema_columns para '{name}': OK.")
+    log.info(f"[Quality][Landing]       _check_schema_columns: OK")
 
 
 # Executor

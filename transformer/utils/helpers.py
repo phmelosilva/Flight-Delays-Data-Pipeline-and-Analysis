@@ -2,7 +2,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
 from transformer.utils.logger import get_logger
 
-log = get_logger("utils.generic_helpers")
+log = get_logger("generic_helpers")
 
 
 def to_date_from_ymd(year_col: F.Column, month_col: F.Column, day_col: F.Column) -> F.Column:
