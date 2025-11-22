@@ -8,5 +8,5 @@ flights_project:
       password: "{{ env_var('DB_PASSWORD') }}"
       port: 5432
       dbname: "{{ env_var('DB_NAME') }}"
-      schema: "dw"
+      schema: "public"
       threads: 4

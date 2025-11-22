@@ -282,10 +282,14 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
     volumes:
       - ./transformer/dbt:/usr/app/dbt
+      - ./transformer/dbt/.dbt:/root/.dbt
     working_dir: /usr/app/dbt
-    command: ["sleep", "infinity"]
+    entrypoint: ["/bin/bash"]
+    command: ["-c", "tail -f /dev/null"]
     networks:
       - flights_net
 

@@ -1,5 +1,6 @@
 .env
 .ipynb_checkpoints
+.user.yml
 .venv/
 .pytest_cache
 .Trash-0

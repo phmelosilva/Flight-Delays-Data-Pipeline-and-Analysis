@@ -1,15 +1,15 @@
 name: "flights_data_models"
-version: "1.0.1"
+version: "2.0.0"
 config-version: 2
 
 profile: "flights_project"
 
-model-paths: ["models"]
 analysis-paths: ["analyses"]
-test-paths: ["tests"]
-seed-paths: ["seeds"]
 macro-paths: ["macros"]
+model-paths: ["models"]
+seed-paths: ["seeds"]
 snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
 
 target-path: "target"
 clean-targets:
@@ -18,12 +18,17 @@ clean-targets:
 
 models:
   flights_data_models:
-    +materialized: view
-    +schema: dw
-
     staging:
-      +tags: ["logical", "bronze"]
+      +schema: dbt_bronze
+      +materialized: view
+      +tags: ["bronze", "raw", "staging"]
+
     intermediate:
-      +tags: ["logial", "silver"]
+      +schema: dbt_silver
+      +materialized: table
+      +tags: ["silver", "clean"]
+
     marts:
-      +tags: ["logical", "gold"]
+      +schema: dbt_gold
+      +materialized: table
+      +tags: ["gold", "mart"]

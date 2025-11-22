@@ -1,0 +1,64 @@
+version: 2
+
+sources:
+  - name: bronze_raw
+    description: "Fontes raw para o pipeline dbt."
+
+    schema: dbt_bronze
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    tables:
+      - name: airlines
+        description: "Dados raw das companhias aéreas."
+        columns:
+          - name: iata_code
+          - name: airline
+
+      - name: airports
+        description: "Dados raw dos aeroportos."
+        columns:
+          - name: iata_code
+          - name: airport
+          - name: city
+          - name: state
+          - name: country
+          - name: latitude
+          - name: longitude
+
+      - name: flights
+        description: "Dados raw dos voos."
+        columns:
+          - name: year
+          - name: month
+          - name: day
+          - name: day_of_week
+          - name: airline
+          - name: flight_number
+          - name: tail_number
+          - name: origin_airport
+          - name: destination_airport
+          - name: scheduled_departure
+          - name: departure_time
+          - name: departure_delay
+          - name: taxi_out
+          - name: wheels_off
+          - name: scheduled_time
+          - name: elapsed_time
+          - name: air_time
+          - name: distance
+          - name: wheels_on
+          - name: taxi_in
+          - name: scheduled_arrival
+          - name: arrival_time
+          - name: arrival_delay
+          - name: diverted
+          - name: cancelled
+          - name: cancellation_reason
+          - name: air_system_delay
+          - name: security_delay
+          - name: airline_delay
+          - name: late_aircraft_delay
+          - name: weather_delay
