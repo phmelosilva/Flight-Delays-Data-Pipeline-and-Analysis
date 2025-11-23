@@ -1,4 +1,4 @@
-name: "flights_data_models"
+name: "flights_datawarehouse"
 version: "2.0.0"
 config-version: 2
 
@@ -17,18 +17,18 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  flights_data_models:
-    staging:
-      +schema: dbt_bronze
+  flights_datawarehouse:
+    raw:
+      +schema: dbt_raw
       +materialized: view
       +tags: ["bronze", "raw", "staging"]
 
-    intermediate:
+    silver:
       +schema: dbt_silver
       +materialized: table
-      +tags: ["silver", "clean"]
+      +tags: ["clean", "silver"]
 
-    marts:
+    gold:
       +schema: dbt_gold
       +materialized: table
       +tags: ["gold", "mart"]

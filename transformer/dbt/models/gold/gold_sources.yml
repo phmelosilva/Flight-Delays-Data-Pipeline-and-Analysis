@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  - name: dim_airline
+    description: Dimensão de companhias aéreas.
+    tests:
+      - not_empty
+      - pk_not_null:
+          pk_columns: ["airline_id"]
+      - pk_unique:
+          pk_columns: ["airline_id"]
+      - unique_column:
+          column_name: airline_iata_code
+      - not_null_columns:
+          columns: ["airline_iata_code", "airline_name"]
+
+    columns:
+      - name: airline_id
+      - name: airline_iata_code
+      - name: airline_name
+
+  - name: dim_airport
+    description: Dimensão de aeroportos.
+    tests:
+      - not_empty
+      - pk_not_null:
+          pk_columns: ["airport_id"]
+      - pk_unique:
+          pk_columns: ["airport_id"]
+      - unique_column:
+          column_name: airport_iata_code
+      - not_null_columns:
+          columns:
+            ["airport_iata_code", "airport_name", "city_name", "state_code"]
+
+    columns:
+      - name: airport_id
+      - name: airport_iata_code
+      - name: airport_name
+      - name: city_name
+      - name: state_code
+      - name: state_name
+      - name: latitude
+      - name: longitude
+
+  - name: dim_date
+    description: Dimensão de datas.
+    tests:
+      - not_empty
+      - pk_not_null:
+          pk_columns: ["full_date"]
+      - pk_unique:
+          pk_columns: ["full_date"]
+      - not_null_columns:
+          columns: ["full_date", "year", "month", "day", "day_of_week"]
+
+    columns:
+      - name: full_date
+      - name: year
+      - name: month
+      - name: day
+      - name: day_of_week
+      - name: quarter
+      - name: is_holiday
+
+  - name: fato_flights
+    description: Tabela fato principal de voos.
+    tests:
+      - not_empty
+      - pk_not_null:
+          pk_columns: ["flight_id"]
+      - pk_unique:
+          pk_columns: ["flight_id"]
+
+      - not_null_columns:
+          columns:
+            ["full_date", "airline_id", "origin_airport_id", "dest_airport_id"]
+
+      - fk_exists:
+          column: airline_id
+          fk_model: ref('dim_airline')
+          fk_column: airline_id
+
+      - fk_exists:
+          column: origin_airport_id
+          fk_model: ref('dim_airport')
+          fk_column: airport_id
+
+      - fk_exists:
+          column: dest_airport_id
+          fk_model: ref('dim_airport')
+          fk_column: airport_id
+
+      - fk_exists:
+          column: full_date
+          fk_model: ref('dim_date')
+          fk_column: full_date
+
+    columns:
+      - name: flight_id
+      - name: full_date
+      - name: airline_id
+      - name: origin_airport_id
+      - name: dest_airport_id
+      - name: scheduled_departure
+      - name: departure_time
+      - name: scheduled_arrival
+      - name: arrival_time
+      - name: wheels_off
+      - name: wheels_on
+      - name: distance
+      - name: air_time
+      - name: elapsed_time
+      - name: scheduled_time
+      - name: taxi_out
+      - name: taxi_in
+      - name: departure_delay
+      - name: arrival_delay
+      - name: is_overnight_flight
+      - name: air_system_delay
+      - name: security_delay
+      - name: airline_delay
+      - name: late_aircraft_delay
+      - name: weather_delay

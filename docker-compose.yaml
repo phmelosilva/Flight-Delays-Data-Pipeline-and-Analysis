@@ -290,6 +290,8 @@ services:
     working_dir: /usr/app/dbt
     entrypoint: ["/bin/bash"]
     command: ["-c", "tail -f /dev/null"]
+    ports:
+      - "8001:8001"
     networks:
       - flights_net
 

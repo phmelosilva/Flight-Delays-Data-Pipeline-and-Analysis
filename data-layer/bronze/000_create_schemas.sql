@@ -10,15 +10,16 @@
 -- Últimas alterações:
 --
 -- PROJETO => 03 Base de Dados
---         => 05 Tabelas
+--         => 13 Tabelas
+--         => 03 Views
 --
 -- ------------------------------------------------------------------------------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS dbt_bronze;
+CREATE SCHEMA IF NOT EXISTS dbt_raw;
 CREATE SCHEMA IF NOT EXISTS dbt_silver;
 CREATE SCHEMA IF NOT EXISTS dbt_gold;
 CREATE SCHEMA IF NOT EXISTS silver;
 CREATE SCHEMA IF NOT EXISTS gold;
-SET search_path TO dbt_bronze;
+SET search_path TO dbt_raw;
 
 
 CREATE TABLE IF NOT EXISTS airlines (
@@ -69,3 +70,5 @@ CREATE TABLE IF NOT EXISTS flights (
     late_aircraft_delay  TEXT,
     weather_delay        TEXT
 );
+
+COMMENT ON SCHEMA dbt_raw IS 'Tabelas raw e reduzidas para o pipeline com o dbt.';

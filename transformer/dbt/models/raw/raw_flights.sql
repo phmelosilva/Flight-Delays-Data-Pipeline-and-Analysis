@@ -1,7 +1,7 @@
 {{ config(
-    schema = "dbt_bronze",
+    schema = "dbt_raw",
     materialized="view",
-    tags=["bronze"]
+    tags=["raw"]
 ) }}
 
 select
@@ -36,4 +36,4 @@ select
     airline_delay,
     late_aircraft_delay,
     weather_delay
-from {{ source('bronze_raw', 'flights') }}
+from {{ source('raw', 'flights') }}

@@ -1,0 +1,180 @@
+version: 2
+
+models:
+  - name: silver_flights
+    description: >
+      Tabela OBT da silver contendo dados refinados, limpos, enriquecidos
+      e com timestamps normalizados.
+
+    tests:
+      - not_empty
+
+      - pk_not_null:
+          pk_columns: ["flight_id"]
+
+      - pk_unique:
+          pk_columns: ["flight_id"]
+
+      - no_full_duplicates:
+          subset_columns:
+            [
+              "flight_id",
+              "flight_year",
+              "flight_month",
+              "flight_day",
+              "flight_day_of_week",
+              "flight_date",
+              "airline_iata_code",
+              "airline_name",
+              "flight_number",
+              "tail_number",
+              "origin_airport_iata_code",
+              "origin_airport_name",
+              "origin_city",
+              "origin_state",
+              "origin_latitude",
+              "origin_longitude",
+              "dest_airport_iata_code",
+              "dest_airport_name",
+              "dest_city",
+              "dest_state",
+              "dest_latitude",
+              "dest_longitude",
+              "scheduled_departure",
+              "departure_time",
+              "scheduled_arrival",
+              "arrival_time",
+              "wheels_off",
+              "wheels_on",
+              "departure_delay",
+              "arrival_delay",
+              "taxi_out",
+              "taxi_in",
+              "air_time",
+              "elapsed_time",
+              "scheduled_time",
+              "distance",
+              "is_overnight_flight",
+              "air_system_delay",
+              "security_delay",
+              "airline_delay",
+              "late_aircraft_delay",
+              "weather_delay",
+            ]
+
+      - departure_before_arrival:
+          departure_col: departure_time
+          arrival_col: arrival_time
+
+      - origin_dest_different:
+          origin_col: origin_airport_iata_code
+          dest_col: dest_airport_iata_code
+
+      - distance_positive:
+          column_name: distance
+
+      - delay_consistency:
+          arrival_delay: arrival_delay
+          detail_cols:
+            [
+              "air_system_delay",
+              "security_delay",
+              "airline_delay",
+              "late_aircraft_delay",
+              "weather_delay",
+            ]
+
+      - not_null_columns:
+          columns:
+            [
+              "airline_iata_code",
+              "airline_name",
+              "origin_airport_iata_code",
+              "origin_airport_name",
+              "origin_latitude",
+              "origin_longitude",
+              "dest_airport_iata_code",
+              "dest_airport_name",
+              "dest_latitude",
+              "dest_longitude",
+            ]
+
+    columns:
+      - name: flight_id
+        description: Chave primária gerada artificialmente.
+
+      - name: flight_year
+        description: Ano do voo.
+
+      - name: flight_month
+        description: Mês do voo.
+
+      - name: flight_day
+        description: Dia do mês.
+
+      - name: flight_day_of_week
+        description: Dia da semana.
+
+      - name: flight_date
+        description: Data do voo.
+
+      - name: airline_iata_code
+        description: Código IATA da companhia aérea.
+
+      - name: airline_name
+        description: Nome da companhia aérea.
+
+      - name: flight_number
+        description: Número do voo.
+
+      - name: tail_number
+        description: Número de registro da aeronave.
+
+      - name: origin_airport_iata_code
+        description: Código IATA aeroporto origem.
+
+      - name: dest_airport_iata_code
+        description: Código IATA aeroporto destino.
+
+      - name: origin_airport_name
+        description: Nome aeroporto origem.
+
+      - name: dest_airport_name
+        description: Nome aeroporto destino.
+
+      - name: origin_latitude
+        description: Latitude do aeroporto origem.
+
+      - name: origin_longitude
+        description: Longitude do aeroporto origem.
+
+      - name: dest_latitude
+        description: Latitude do aeroporto destino.
+
+      - name: dest_longitude
+        description: Longitude do aeroporto destino.
+
+      - name: scheduled_departure
+      - name: departure_time
+      - name: scheduled_arrival
+      - name: arrival_time
+      - name: wheels_off
+      - name: wheels_on
+
+      - name: departure_delay
+      - name: arrival_delay
+      - name: distance
+      - name: air_time
+      - name: elapsed_time
+      - name: scheduled_time
+      - name: taxi_out
+      - name: taxi_in
+
+      - name: is_overnight_flight
+        description: Indica se cruzou de dia.
+
+      - name: air_system_delay
+      - name: security_delay
+      - name: airline_delay
+      - name: late_aircraft_delay
+      - name: weather_delay

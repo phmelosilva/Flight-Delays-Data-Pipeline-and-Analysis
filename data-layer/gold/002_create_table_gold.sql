@@ -19,13 +19,14 @@
 --                 => Corrige tipos dos atributos 'airport_id', 'airline_id' e 'flight_id';
 --
 -- PROJETO => 03 Base de Dados
---         => 05 Tabelas
+--         => 13 Tabelas
+--         => 03 Views
 --
 -- ---------------------------------------------------------------------------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS gold;
 SET search_path TO gold;
 
--- Tabelas --
+
 CREATE TABLE IF NOT EXISTS dim_airport (
     airport_id BIGSERIAL,
     airport_iata_code VARCHAR(3) UNIQUE NOT NULL,
@@ -88,13 +89,11 @@ CREATE TABLE IF NOT EXISTS fato_flights (
     weather_delay DOUBLE PRECISION DEFAULT 0
 );
 
--- Chaves Primárias (PKs) --
 ALTER TABLE dim_airport ADD CONSTRAINT pk_dim_airport PRIMARY KEY (airport_id);
 ALTER TABLE dim_airline ADD CONSTRAINT pk_dim_airline PRIMARY KEY (airline_id);
 ALTER TABLE dim_date ADD CONSTRAINT pk_dim_date PRIMARY KEY (full_date);
 ALTER TABLE fato_flights ADD CONSTRAINT pk_fato_flights PRIMARY KEY (flight_id);
 
--- Chaves Estrangeiras (FKs) --
 ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_full_date
     FOREIGN KEY (full_date) REFERENCES dim_date(full_date)
     ON DELETE CASCADE ON UPDATE CASCADE;
@@ -111,21 +110,17 @@ ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_dest_airport_id
     FOREIGN KEY (dest_airport_id) REFERENCES dim_airport(airport_id)
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Índices para acelerar os JOINs da Fato com as Dimensões --
 CREATE INDEX IF NOT EXISTS idx_flights_date ON fato_flights(full_date);
 CREATE INDEX IF NOT EXISTS idx_flights_airline ON fato_flights(airline_id);
 CREATE INDEX IF NOT EXISTS idx_flights_origin ON fato_flights(origin_airport_id);
 CREATE INDEX IF NOT EXISTS idx_flights_dest ON fato_flights(dest_airport_id);
 
--- Índices para acelerar métricas e Filtros na tabela Fato --
 CREATE INDEX IF NOT EXISTS idx_fato_flights_arrival_delay ON fato_flights (arrival_delay);
 CREATE INDEX IF NOT EXISTS idx_fato_flights_scheduled_departure ON fato_flights (scheduled_departure);
 CREATE INDEX IF NOT EXISTS idx_fato_flights_scheduled_time ON fato_flights (scheduled_time);
 
--- Índices para acelerar os Filtros nas Dimensões --
 CREATE INDEX IF NOT EXISTS idx_dim_airline_airline_name ON dim_airline (airline_name);
 CREATE INDEX IF NOT EXISTS idx_dim_airport_airport_name ON dim_airport (airport_name);
 CREATE INDEX IF NOT EXISTS idx_dim_airport_state_code ON dim_airport (state_code);
-
 
 COMMENT ON SCHEMA gold IS 'Modelagem Star, otimizada para BI e IA.';

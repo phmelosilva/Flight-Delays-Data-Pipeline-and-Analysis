@@ -1,7 +1,7 @@
 {{ config(
-    schema = "dbt_bronze",
+    schema = "dbt_raw",
     materialized="view",
-    tags=["bronze"]
+    tags=["raw"]
 ) }}
 
 select
@@ -12,4 +12,4 @@ select
     country,
     latitude,
     longitude
-from {{ source('bronze_raw', 'airports') }}
+from {{ source('raw', 'airports') }}

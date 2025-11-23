@@ -15,11 +15,13 @@
 --      09/11/2025 => Corrige tipo do atributo "flight_id" e padroniza DDL;
 --
 -- PROJETO => 03 Base de Dados
---         => 05 Tabelas
+--         => 13 Tabelas
+--         => 03 Views
 --
 -- ------------------------------------------------------------------------------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS silver;
 SET search_path TO silver;
+
 
 CREATE TABLE IF NOT EXISTS flights_silver (
     flight_id BIGINT,
