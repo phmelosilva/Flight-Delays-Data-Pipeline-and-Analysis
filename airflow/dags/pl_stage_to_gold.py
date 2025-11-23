@@ -2,20 +2,23 @@ from airflow.decorators import dag
 from airflow.providers.standard.operators.bash import BashOperator
 from pendulum import datetime, duration
 
-
 # Caminhos
 NOTEBOOK_BASE_PATH = "/opt/airflow/transformer"
 OUTPUT_BASE_PATH = f"{NOTEBOOK_BASE_PATH}/output"
-NB_STAGE_TO_BRONZE = f"{NOTEBOOK_BASE_PATH}/01_etl_stage_to_bronze.ipynb"
-NB_BRONZE_TO_SILVER = f"{NOTEBOOK_BASE_PATH}/02_etl_bronze_to_silver.ipynb"
+NB_STAGE_TO_RAW = f"{NOTEBOOK_BASE_PATH}/01_etl_stage_to_raw.ipynb"
+NB_RAW_TO_SILVER = f"{NOTEBOOK_BASE_PATH}/02_etl_raw_to_silver.ipynb"
 NB_SILVER_TO_GOLD = f"{NOTEBOOK_BASE_PATH}/03_etl_silver_to_gold.ipynb"
 
 # Variáveis Airflow
 STAGE_PATH = "{{ var.value.data_layer_stage_path }}"
-BRONZE_PATH = "{{ var.value.data_layer_bronze_path }}"
+RAW_PATH = "{{ var.value.data_layer_raw_path }}"
 SILVER_PATH = "{{ var.value.data_layer_silver_path }}"
 GOLD_PATH = "{{ var.value.data_layer_gold_path }}"
 POSTGRES_CONN_ID = "{{ var.value.postgres_conn_id }}"
+
+# Variáveis dbt
+DBT_PROJECT_DIR = "/usr/app/dbt"
+DBT_PROFILE_DIR = "/root/.dbt"
 
 default_args = {
     "depends_on_past": False,
@@ -31,19 +34,20 @@ default_args = {
     schedule=None,
     catchup=False,
     default_args=default_args,
-    tags=["stage", "bronze", "silver", "gold", "etl"],
+    tags=["stage", "raw", "silver", "gold", "etl"],
     doc_md="""
     +--------------------------------------------------------------------------+
     |                                                                          |
-    |                     DAG - Pipeline Completo                              |
+    |                        DAG - Pipeline Completo                           |
     |                                                                          |
-    |   Esta DAG orquestra o pipeline completo da área de Stage até a Gold,    |
-    |   executando notebooks parametrizados via papermill dentro do container  |
-    |   'data_transformer'.                                                    |
+    |   Esta dag orquestra o pipeline completo da camada Raw até a Gold,       |
+    |   executando notebooks parametrizados via Papermill dentro do container  |
+    |   'data_transformer', enquanto realiza as mesmas etapas em um conjunto   |
+    |   de dados reduzido utilizando o dbt dentro do container 'dbt_runner'.   |
     |                                                                          |
     |   Etapas:                                                                |
-    |       1. Stage -> Bronze: Ingestão na camada Bronze em formato Parquet;  |
-    |       2. Bronze -> Silver: Limpeza, normalização e agregação;            |
+    |       1. Stage -> Raw: Ingestão dos dados em formato Parquet;            |
+    |       2. Raw -> Silver: Limpeza, padronização e agregação;               |
     |       3. Silver -> Gold: Modelagem em esquema estrela e carga final no   |
     |          Data Warehouse.                                                 |
     |                                                                          |
@@ -52,34 +56,35 @@ default_args = {
 )
 def pipeline_stage_to_gold():
 
+    # Tasks do Spark
     create_output_dir_task = BashOperator(
         task_id="create_output_dir_task",
         bash_command=f"mkdir -p {OUTPUT_BASE_PATH}/{{{{ ds }}}}",
         do_xcom_push=False,
     )
 
-    stage_to_bronze_task = BashOperator(
-        task_id="stage_to_bronze_task",
+    stage_to_raw_task = BashOperator(
+        task_id="stage_to_raw_task",
         bash_command=(
             "docker exec data_transformer "
-            f"papermill {NB_STAGE_TO_BRONZE} "
-            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/01_etl_stage_to_bronze.ipynb "
+            f"papermill {NB_STAGE_TO_RAW} "
+            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/01_etl_stage_to_raw.ipynb "
             f"-p stage_path {STAGE_PATH} "
-            f"-p bronze_path {BRONZE_PATH} "
+            f"-p raw_path {RAW_PATH} "
             f"-p run_mode 'latest'"
         ),
         do_xcom_push=False,
     )
 
-    bronze_to_silver_task = BashOperator(
-        task_id="bronze_to_silver_task",
+    raw_to_silver_task = BashOperator(
+        task_id="raw_to_silver_task",
         bash_command=(
             "docker exec data_transformer "
-            f"papermill {NB_BRONZE_TO_SILVER} "
-            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/02_etl_bronze_to_silver.ipynb "
+            f"papermill {NB_RAW_TO_SILVER} "
+            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/02_etl_raw_to_silver.ipynb "
             f"-p run_mode 'latest' "
             f"-p run_date None "
-            f"-p bronze_path {BRONZE_PATH} "
+            f"-p raw_path {RAW_PATH} "
             f"-p silver_path {SILVER_PATH} "
             f"-p postgres_conn_id {POSTGRES_CONN_ID}"
         ),
@@ -91,7 +96,7 @@ def pipeline_stage_to_gold():
         bash_command=(
             "docker exec data_transformer "
             f"papermill {NB_SILVER_TO_GOLD} "
-            f"{ OUTPUT_BASE_PATH }/{{{{ ds }}}}/03_etl_silver_to_gold.ipynb "
+            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/03_etl_silver_to_gold.ipynb "
             f"-p run_mode 'latest' "
             f"-p run_date None "
             f"-p silver_path {SILVER_PATH} "
@@ -102,6 +107,61 @@ def pipeline_stage_to_gold():
         do_xcom_push=False,
     )
 
-    create_output_dir_task >> stage_to_bronze_task >> bronze_to_silver_task >> silver_to_gold_task
+    # Tasks do dbt
+    dbt_run_raw_task = BashOperator(
+        task_id="dbt_run_raw_task",
+        bash_command=(
+            f"docker exec dbt_runner "
+            f"dbt run --project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILE_DIR} "
+            "--select raw"
+        ),
+        do_xcom_push=False,
+    )
+
+    dbt_run_silver_task = BashOperator(
+        task_id="dbt_run_silver_task",
+        bash_command=(
+            f"docker exec dbt_runner "
+            f"dbt run --project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILE_DIR} "
+            "--select silver"
+        ),
+        do_xcom_push=False,
+    )
+
+    dbt_run_gold_task = BashOperator(
+        task_id="dbt_run_gold_task",
+        bash_command=(
+            f"docker exec dbt_runner "
+            f"dbt run --project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILE_DIR} "
+            "--select gold"
+        ),
+        do_xcom_push=False,
+    )
+
+    dbt_test_task = BashOperator(
+        task_id="dbt_test_task",
+        bash_command=(
+            f"docker exec dbt_runner "
+            f"dbt test --project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILE_DIR}"
+        ),
+        do_xcom_push=False,
+    )
+
+    dbt_docs_generate_task = BashOperator(
+        task_id="dbt_docs_generate_task",
+        bash_command=(
+            f"docker exec dbt_runner "
+            f"dbt docs generate --project-dir {DBT_PROJECT_DIR} --profiles-dir {DBT_PROFILE_DIR}"
+        ),
+        do_xcom_push=False,
+    )
+
+    create_output_dir_task >> stage_to_raw_task
+
+    # Spark
+    stage_to_raw_task >> raw_to_silver_task >> silver_to_gold_task
+
+    # dbt
+    stage_to_raw_task >> dbt_run_raw_task >> dbt_run_silver_task >> dbt_run_gold_task >> dbt_test_task >> dbt_docs_generate_task
 
 pipeline_stage_to_gold()

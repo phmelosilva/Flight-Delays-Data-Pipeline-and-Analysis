@@ -23,7 +23,7 @@ CREATE SCHEMA IF NOT EXISTS silver;
 SET search_path TO silver;
 
 
-CREATE TABLE IF NOT EXISTS flights_silver (
+CREATE TABLE IF NOT EXISTS silver_flights (
     flight_id BIGINT,
     flight_year SMALLINT NOT NULL,
     flight_month SMALLINT NOT NULL,
@@ -76,16 +76,16 @@ CREATE TABLE IF NOT EXISTS flights_silver (
     weather_delay DOUBLE PRECISION DEFAULT 0
 );
 
-ALTER TABLE flights_silver ADD CONSTRAINT pk_flights_silver 
+ALTER TABLE silver_flights ADD CONSTRAINT pk_silver_flights 
     PRIMARY KEY (flight_id);
 
-CREATE INDEX IF NOT EXISTS idx_flights_silver_date 
-    ON flights_silver (flight_date);
-CREATE INDEX IF NOT EXISTS idx_flights_silver_airline 
-    ON flights_silver (airline_iata_code);
-CREATE INDEX IF NOT EXISTS idx_flights_silver_origin_dest 
-    ON flights_silver (origin_airport_iata_code, dest_airport_iata_code);
-CREATE INDEX IF NOT EXISTS idx_flights_silver_times 
-    ON flights_silver (departure_time, arrival_time);
+CREATE INDEX IF NOT EXISTS idx_silver_flights_date 
+    ON silver_flights (flight_date);
+CREATE INDEX IF NOT EXISTS idx_silver_flights_airline 
+    ON silver_flights (airline_iata_code);
+CREATE INDEX IF NOT EXISTS idx_silver_flights_origin_dest 
+    ON silver_flights (origin_airport_iata_code, dest_airport_iata_code);
+CREATE INDEX IF NOT EXISTS idx_silver_flights_times 
+    ON silver_flights (departure_time, arrival_time);
 
 COMMENT ON SCHEMA silver IS 'Modelagem OBT para a camada silver.';
