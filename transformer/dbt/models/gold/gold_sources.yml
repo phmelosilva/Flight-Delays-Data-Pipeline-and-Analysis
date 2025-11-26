@@ -1,8 +1,9 @@
 version: 2
 
 models:
+  # dim_airline
   - name: dim_airline
-    description: Dimensão de companhias aéreas.
+    description: "Dimensão de companhias aéreas utilizadas nos voos de 2015 nos EUA."
     tests:
       - not_empty
       - pk_not_null:
@@ -16,11 +17,15 @@ models:
 
     columns:
       - name: airline_id
+        description: "Chave substituta da companhia aérea."
       - name: airline_iata_code
+        description: "Código IATA da companhia aérea."
       - name: airline_name
+        description: "Nome da companhia aérea."
 
+  # dim_airport
   - name: dim_airport
-    description: Dimensão de aeroportos.
+    description: "Dimensão de aeroportos dos EUA com base nos dados de 2015 do USDOT (via Kaggle)."
     tests:
       - not_empty
       - pk_not_null:
@@ -35,16 +40,25 @@ models:
 
     columns:
       - name: airport_id
+        description: "Chave substituta do aeroporto."
       - name: airport_iata_code
+        description: "Código IATA do aeroporto."
       - name: airport_name
+        description: "Nome do aeroporto."
       - name: city_name
+        description: "Cidade onde o aeroporto está localizado."
       - name: state_code
+        description: "Código do estado (sigla)."
       - name: state_name
+        description: "Nome completo do estado (não disponível na raw; permanece nulo)."
       - name: latitude
+        description: "Latitude do aeroporto."
       - name: longitude
+        description: "Longitude do aeroporto."
 
+  # dim_date
   - name: dim_date
-    description: Dimensão de datas.
+    description: "Dimensão de datas derivada das observações de voo do ano de 2015."
     tests:
       - not_empty
       - pk_not_null:
@@ -56,15 +70,23 @@ models:
 
     columns:
       - name: full_date
+        description: "Data completa utilizada como chave da dimensão."
       - name: year
+        description: "Ano da data."
       - name: month
+        description: "Mês correspondente."
       - name: day
+        description: "Dia do mês."
       - name: day_of_week
+        description: "Dia da semana (1 = segunda, 7 = domingo)."
       - name: quarter
+        description: "Trimestre do ano."
       - name: is_holiday
+        description: "Indica feriados nacionais dos EUA baseados no calendário oficial de 2015."
 
+  # fato_flights
   - name: fato_flights
-    description: Tabela fato principal de voos.
+    description: "Tabela fato principal contendo métricas operacionais dos voos de 2015."
     tests:
       - not_empty
       - pk_not_null:
@@ -98,27 +120,56 @@ models:
 
     columns:
       - name: flight_id
+        description: "Chave substituta do voo (gerada na Silver)."
       - name: full_date
+        description: "Chave da data do voo."
       - name: airline_id
+        description: "Chave da companhia aérea."
       - name: origin_airport_id
+        description: "Chave do aeroporto de origem."
       - name: dest_airport_id
+        description: "Chave do aeroporto de destino."
+
       - name: scheduled_departure
+        description: "Horário programado de partida (bruto)."
       - name: departure_time
+        description: "Horário real de partida (corrigido)."
       - name: scheduled_arrival
+        description: "Horário programado de chegada."
       - name: arrival_time
+        description: "Horário real de chegada (corrigido)."
       - name: wheels_off
+        description: "Momento em que a aeronave decola."
       - name: wheels_on
+        description: "Momento em que a aeronave pousa."
+
       - name: distance
+        description: "Distância do voo em milhas."
       - name: air_time
+        description: "Tempo em ar (minutos)."
       - name: elapsed_time
+        description: "Tempo total do voo (minutos)."
       - name: scheduled_time
+        description: "Tempo programado total (minutos)."
       - name: taxi_out
+        description: "Tempo de taxiamento na origem."
       - name: taxi_in
+        description: "Tempo de taxiamento no destino."
+
       - name: departure_delay
+        description: "Atraso na partida."
       - name: arrival_delay
+        description: "Atraso na chegada."
       - name: is_overnight_flight
+        description: "Indica se atravessou a meia-noite."
+
       - name: air_system_delay
+        description: "Atraso por sistema de tráfego aéreo."
       - name: security_delay
+        description: "Atraso por questões de segurança."
       - name: airline_delay
+        description: "Atraso atribuído à companhia aérea."
       - name: late_aircraft_delay
+        description: "Atraso causado por chegada tardia da aeronave."
       - name: weather_delay
+        description: "Atraso devido a condições climáticas adversas."

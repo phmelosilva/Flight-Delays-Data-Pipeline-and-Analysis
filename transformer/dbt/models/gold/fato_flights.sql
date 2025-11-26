@@ -1,11 +1,16 @@
+-- Model: fato_flights
+-- Descrição: Fato de voos contendo métricas operacionais e chaves substitutas das dimensões, derivado da OBT.
+
+
 {{ config(
-    schema = "dbt_gold",
     materialized = "table",
-    tags = ["gold", "fato", "flights"]
+    schema       = "dbt_gold",
+    tags         = ["gold", "fato", "flights"]
 ) }}
 
-with src as (
-    select
+-- Seleção e preparação dos campos da Silver.
+WITH src AS (
+    SELECT
         flight_id,
         flight_date,
         airline_iata_code,
@@ -35,41 +40,45 @@ with src as (
         airline_delay,
         late_aircraft_delay,
         weather_delay
-    from {{ ref('silver_flights') }}
+    FROM {{ ref('silver_flights') }}
 ),
 
-with_dim_airline as (
-    select
+-- Junção com a dimensão de companhias aéreas.
+with_dim_airline AS (
+    SELECT
         s.*,
         da.airline_id
-    from src s
-    left join {{ ref('dim_airline') }} da
-        on s.airline_iata_code = da.airline_iata_code
+    FROM src s
+    LEFT JOIN {{ ref('dim_airline') }} da
+        ON s.airline_iata_code = da.airline_iata_code
 ),
 
-with_dim_airport as (
-    select
+-- Junção com a dimensão de aeroportos (origem e destino).
+with_dim_airport AS (
+    SELECT
         s.*,
-        ao.airport_id as origin_airport_id,
-        ad.airport_id as dest_airport_id
-    from with_dim_airline s
-    left join {{ ref('dim_airport') }} ao
-        on s.origin_airport_iata_code = ao.airport_iata_code
-    left join {{ ref('dim_airport') }} ad
-        on s.dest_airport_iata_code = ad.airport_iata_code
+        ao.airport_id AS origin_airport_id,
+        ad.airport_id AS dest_airport_id
+    FROM with_dim_airline s
+    LEFT JOIN {{ ref('dim_airport') }} ao
+        ON s.origin_airport_iata_code = ao.airport_iata_code
+    LEFT JOIN {{ ref('dim_airport') }} ad
+        ON s.dest_airport_iata_code = ad.airport_iata_code
 ),
 
-with_dim_date as (
-    select
+-- Junção com a dimensão de datas.
+with_dim_date AS (
+    SELECT
         wda.*,
         dd.full_date
-    from with_dim_airport wda
-    left join {{ ref('dim_date') }} dd
-        on wda.flight_date = dd.full_date
+    FROM with_dim_airport wda
+    LEFT JOIN {{ ref('dim_date') }} dd
+        ON wda.flight_date = dd.full_date
 ),
 
-final as (
-    select
+-- Projeção final dos campos do fato.
+final AS (
+    SELECT
         flight_id,
         full_date,
         airline_id,
@@ -99,9 +108,9 @@ final as (
         airline_delay,
         late_aircraft_delay,
         weather_delay
-    from with_dim_date
-    order by flight_id
+    FROM with_dim_date
+    ORDER BY flight_id
 )
 
-select *
-from final
+SELECT *
+FROM final

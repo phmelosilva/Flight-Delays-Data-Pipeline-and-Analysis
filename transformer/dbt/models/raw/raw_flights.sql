@@ -1,10 +1,13 @@
+-- Model: raw_flights
+-- Descrição: Expõe os dados brutos de voos da camada Raw.
+
 {{ config(
-    schema = "dbt_raw",
-    materialized="view",
-    tags=["raw"]
+    materialized = "view",
+    schema       = "dbt_raw",
+    tags         = ["raw"]
 ) }}
 
-select
+SELECT
     year,
     month,
     day,
@@ -36,4 +39,4 @@ select
     airline_delay,
     late_aircraft_delay,
     weather_delay
-from {{ source('raw', 'flights') }}
+FROM {{ source('raw', 'flights') }}

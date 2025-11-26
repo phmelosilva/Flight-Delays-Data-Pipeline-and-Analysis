@@ -1,10 +1,13 @@
+-- Model: raw_airports
+-- Descrição: Expõe os dados de aeroportos da camada Raw.
+
 {{ config(
-    schema = "dbt_raw",
-    materialized="view",
-    tags=["raw"]
+    materialized = "view",
+    schema       = "dbt_raw",
+    tags         = ["raw"]
 ) }}
 
-select
+SELECT
     iata_code,
     airport,
     city,
@@ -12,4 +15,4 @@ select
     country,
     latitude,
     longitude
-from {{ source('raw', 'airports') }}
+FROM {{ source('raw', 'airports') }}

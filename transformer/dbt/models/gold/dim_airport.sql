@@ -1,37 +1,45 @@
+-- Model: dim_airport
+-- Descrição: Dimensão de aeroportos derivada da tabela OBT.
+
 {{ config(
-    schema = "dbt_gold",
     materialized = "table",
-    tags = ["gold", "dim", "airport"]
+    schema       = "dbt_gold",
+    tags         = ["gold", "dim", "airport"]
 ) }}
 
-with airports_raw as (
-    select distinct
-        origin_airport_iata_code as airport_iata_code,
-        origin_airport_name      as airport_name,
-        origin_city              as city_name,
-        origin_state             as state_code,
-        null::varchar(100)       as state_name,
-        origin_latitude          as latitude,
-        origin_longitude         as longitude
-    from {{ ref('silver_flights') }}
-    where origin_airport_iata_code is not null
 
-    union distinct
+-- Consolidação dos aeroportos de origem e destino a partir da silver_flgihts.
+WITH airports_raw AS (
 
-    select distinct
-        dest_airport_iata_code   as airport_iata_code,
-        dest_airport_name        as airport_name,
-        dest_city                as city_name,
-        dest_state               as state_code,
-        null::varchar(100)       as state_name,
-        dest_latitude            as latitude,
-        dest_longitude           as longitude
-    from {{ ref('silver_flights') }}
-    where dest_airport_iata_code is not null
+    SELECT DISTINCT
+        origin_airport_iata_code AS airport_iata_code,
+        origin_airport_name      AS airport_name,
+        origin_city              AS city_name,
+        origin_state             AS state_code,
+        NULL::VARCHAR(100)       AS state_name,
+        origin_latitude          AS latitude,
+        origin_longitude         AS longitude
+    FROM {{ ref('silver_flights') }}
+    WHERE origin_airport_iata_code IS NOT NULL
+
+    UNION DISTINCT
+
+    SELECT DISTINCT
+        dest_airport_iata_code   AS airport_iata_code,
+        dest_airport_name        AS airport_name,
+        dest_city                AS city_name,
+        dest_state               AS state_code,
+        NULL::VARCHAR(100)       AS state_name,
+        dest_latitude            AS latitude,
+        dest_longitude           AS longitude
+    FROM {{ ref('silver_flights') }}
+    WHERE dest_airport_iata_code IS NOT NULL
+
 ),
 
-clean as (
-    select
+-- Projeção e organização das colunas finais da dimensão.
+clean AS (
+    SELECT
         airport_iata_code,
         airport_name,
         state_code,
@@ -39,11 +47,12 @@ clean as (
         city_name,
         latitude,
         longitude
-    from airports_raw
+    FROM airports_raw
 )
 
-select
-    row_number() over (order by airport_iata_code)::bigint as airport_id,
+-- Criação da chave substituta e ordenação da dimensão.
+SELECT
+    ROW_NUMBER() OVER (ORDER BY airport_iata_code)::BIGINT AS airport_id,
     airport_iata_code,
     airport_name,
     state_code,
@@ -51,5 +60,5 @@ select
     city_name,
     latitude,
     longitude
-from clean
-order by airport_iata_code
+FROM clean
+ORDER BY airport_iata_code

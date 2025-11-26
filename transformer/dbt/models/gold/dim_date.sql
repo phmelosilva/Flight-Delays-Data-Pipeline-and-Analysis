@@ -1,9 +1,14 @@
+-- Model: dim_date
+-- Descrição: Dimensão de datas construída a partir da tabela OBT.
+
+
 {{ config(
-    schema = "dbt_gold",
     materialized = "table",
-    tags = ["gold", "dim", "date"]
+    schema       = "dbt_gold",
+    tags         = ["gold", "dim", "date"]
 ) }}
 
+-- Lista de feriados dos EUA em 2015 (USDOT / calendário federal)
 {% set us_holidays_2015 = [
     "2015-01-01",
     "2015-01-19",
@@ -17,29 +22,34 @@
     "2015-12-25"
 ] %}
 
-with base as (
-    select distinct
+-- Datas distintas presentes nos voos da Silver
+WITH base AS (
+    SELECT DISTINCT
         flight_date
-    from {{ ref('silver_flights') }}
-    where flight_date is not null
+    FROM {{ ref('silver_flights') }}
+    WHERE flight_date IS NOT NULL
 ),
 
-final as (
-    select
-        flight_date                                                     as full_date,
-        extract(year    from flight_date)::smallint                     as year,
-        extract(month   from flight_date)::smallint                     as month,
-        extract(day     from flight_date)::smallint                     as day,
-        (((extract(dow from flight_date)::int + 6) % 7) + 1)::smallint  as day_of_week,
-        extract(quarter from flight_date)::smallint                     as quarter,
+-- Construção dos atributos da dimensão de datas
+final AS (
+    SELECT
+        flight_date                                                    AS full_date,
+        EXTRACT(YEAR    FROM flight_date)::SMALLINT                    AS year,
+        EXTRACT(MONTH   FROM flight_date)::SMALLINT                    AS month,
+        EXTRACT(DAY     FROM flight_date)::SMALLINT                    AS day,
+        (((EXTRACT(DOW  FROM flight_date)::INT + 6) % 7) + 1)::SMALLINT AS day_of_week,
+        EXTRACT(QUARTER FROM flight_date)::SMALLINT                    AS quarter,
         (
-            flight_date::date in (
+            flight_date::DATE IN (
                 {% for d in us_holidays_2015 %}
                     '{{ d }}'{{ "," if not loop.last }}
                 {% endfor %}
             )
-        ) as is_holiday
-    from base
+        ) AS is_holiday
+    FROM base
 )
 
-select * from final order by full_date
+-- Seleção ordenada para formar a dimensão
+SELECT *
+FROM final
+ORDER BY full_date

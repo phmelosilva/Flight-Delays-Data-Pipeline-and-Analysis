@@ -3,8 +3,10 @@ version: 2
 models:
   - name: silver_flights
     description: >
-      Tabela OBT da silver contendo dados refinados, limpos, enriquecidos
-      e com timestamps normalizados.
+      Tabela OBT da camada Silver contendo dados limpos, enriquecidos e normalizados,
+      derivados do dataset USDOT (2015) disponibilizado via Kaggle. Inclui ajustes de
+      horários, tratamento de voos overnight, enriquecimento com informações de
+      companhias aéreas e aeroportos, além de validações e conversões padronizadas.
 
     tests:
       - not_empty
@@ -101,80 +103,115 @@ models:
 
     columns:
       - name: flight_id
-        description: Chave primária gerada artificialmente.
+        description: Chave primária artificial utilizada para identificação única do voo.
 
       - name: flight_year
-        description: Ano do voo.
+        description: Ano do voo conforme informado no dataset bruto.
 
       - name: flight_month
         description: Mês do voo.
 
       - name: flight_day
-        description: Dia do mês.
+        description: Dia do mês referente ao voo.
 
       - name: flight_day_of_week
-        description: Dia da semana.
+        description: Dia da semana (1 = segunda-feira).
 
       - name: flight_date
-        description: Data do voo.
+        description: Data completa do voo construída a partir de year, month e day.
 
       - name: airline_iata_code
         description: Código IATA da companhia aérea.
 
       - name: airline_name
-        description: Nome da companhia aérea.
+        description: Nome da companhia aérea associada ao código IATA.
 
       - name: flight_number
-        description: Número do voo.
+        description: Número comercial do voo.
 
       - name: tail_number
-        description: Número de registro da aeronave.
+        description: Identificador único da aeronave (tail number).
 
       - name: origin_airport_iata_code
-        description: Código IATA aeroporto origem.
+        description: Código IATA do aeroporto de origem.
 
       - name: dest_airport_iata_code
-        description: Código IATA aeroporto destino.
+        description: Código IATA do aeroporto de destino.
 
       - name: origin_airport_name
-        description: Nome aeroporto origem.
+        description: Nome do aeroporto de origem.
 
       - name: dest_airport_name
-        description: Nome aeroporto destino.
+        description: Nome do aeroporto de destino.
 
       - name: origin_latitude
-        description: Latitude do aeroporto origem.
+        description: Latitude geográfica do aeroporto de origem.
 
       - name: origin_longitude
-        description: Longitude do aeroporto origem.
+        description: Longitude geográfica do aeroporto de origem.
 
       - name: dest_latitude
-        description: Latitude do aeroporto destino.
+        description: Latitude geográfica do aeroporto de destino.
 
       - name: dest_longitude
-        description: Longitude do aeroporto destino.
+        description: Longitude geográfica do aeroporto de destino.
 
       - name: scheduled_departure
+        description: Horário programado de partida no formato HHMM.
+
       - name: departure_time
+        description: Horário real de partida no formato HHMM.
+
       - name: scheduled_arrival
+        description: Horário programado de chegada no formato HHMM.
+
       - name: arrival_time
+        description: Horário real de chegada no formato HHMM.
+
       - name: wheels_off
+        description: Horário em que a aeronave decolou (saiu do solo).
+
       - name: wheels_on
+        description: Horário em que a aeronave pousou (tocou o solo).
 
       - name: departure_delay
+        description: Atraso na partida em minutos.
+
       - name: arrival_delay
+        description: Atraso na chegada em minutos.
+
       - name: distance
+        description: Distância entre origem e destino em milhas.
+
       - name: air_time
+        description: Tempo efetivamente passado em voo (airborne time), em minutos.
+
       - name: elapsed_time
+        description: Tempo total real de operação do voo em minutos.
+
       - name: scheduled_time
+        description: Tempo total programado para o voo.
+
       - name: taxi_out
+        description: Tempo de taxiamento antes da decolagem.
+
       - name: taxi_in
+        description: Tempo de taxiamento após o pouso.
 
       - name: is_overnight_flight
-        description: Indica se cruzou de dia.
+        description: Indica se o voo cruzou a meia-noite.
 
       - name: air_system_delay
+        description: Atraso atribuído ao sistema de tráfego aéreo.
+
       - name: security_delay
+        description: Atraso derivado de procedimentos de segurança.
+
       - name: airline_delay
+        description: Atraso causado pela companhia aérea.
+
       - name: late_aircraft_delay
+        description: Atraso causado pela chegada tardia da aeronave usada no voo anterior.
+
       - name: weather_delay
+        description: Atraso decorrente de condições climáticas adversas.

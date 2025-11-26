@@ -1,20 +1,24 @@
+-- Model: dim_airline
+-- Descrição: Dimensão de companhias aéreas derivada da tabela OBT.
+
 {{ config(
-    schema = "dbt_gold",
     materialized = "table",
-    tags = ["gold", "dim", "airline"]
+    schema       = "dbt_gold",
+    tags         = ["gold", "dim", "airline"]
 ) }}
 
-with airlines as (
-    select distinct
+
+WITH airlines AS (
+    SELECT DISTINCT
         airline_iata_code,
         airline_name
-    from {{ ref('silver_flights') }}
-    where airline_iata_code is not null
+    FROM {{ ref('silver_flights') }}
+    WHERE airline_iata_code IS NOT NULL
 )
 
-select
-    row_number() over (order by airline_iata_code)::bigint as airline_id,
+SELECT
+    ROW_NUMBER() OVER (ORDER BY airline_iata_code)::BIGINT AS airline_id,
     airline_iata_code,
     airline_name
-from airlines
-order by airline_iata_code
+FROM airlines
+ORDER BY airline_iata_code

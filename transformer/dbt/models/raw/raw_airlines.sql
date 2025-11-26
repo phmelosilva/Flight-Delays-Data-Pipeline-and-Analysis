@@ -1,10 +1,13 @@
+-- Model: raw_airlines
+-- Descrição: Expõe a tabela de companhias aéreas da camada Raw.
+
 {{ config(
-    schema = "dbt_raw",
-    materialized="view",
-    tags=["raw"]
+    materialized = "view",
+    schema       = "dbt_raw",
+    tags         = ["raw"]
 ) }}
 
-select
+SELECT
     iata_code,
     airline
-from {{ source('raw', 'airlines') }}
+FROM {{ source('raw', 'airlines') }}
