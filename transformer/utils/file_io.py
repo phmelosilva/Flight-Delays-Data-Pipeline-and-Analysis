@@ -58,6 +58,7 @@ def find_partition(base_path: str, mode: str = "latest", date_str: str | None = 
     # Seleciona a partição mais recente
     latest_partition = sorted(candidates)[-1]
     log.info(f"[INFO] Partição selecionada: {latest_partition}")
+
     return latest_partition
 
 

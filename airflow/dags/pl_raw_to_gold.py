@@ -2,12 +2,11 @@ from airflow.decorators import dag
 from airflow.providers.standard.operators.bash import BashOperator
 from pendulum import datetime, duration
 
-# Caminhos
+# Caminhos dos Notebooks
 NOTEBOOK_BASE_PATH = "/opt/airflow/transformer"
 OUTPUT_BASE_PATH = f"{NOTEBOOK_BASE_PATH}/output"
-NB_STAGE_TO_RAW = f"{NOTEBOOK_BASE_PATH}/01_etl_stage_to_raw.ipynb"
-NB_RAW_TO_SILVER = f"{NOTEBOOK_BASE_PATH}/02_etl_raw_to_silver.ipynb"
-NB_SILVER_TO_GOLD = f"{NOTEBOOK_BASE_PATH}/03_etl_silver_to_gold.ipynb"
+NB_RAW_TO_SILVER = f"{NOTEBOOK_BASE_PATH}/etl_raw_to_silver.ipynb"
+NB_SILVER_TO_GOLD = f"{NOTEBOOK_BASE_PATH}/etl_silver_to_gold.ipynb"
 
 # Variáveis Airflow
 STAGE_PATH = "{{ var.value.data_layer_stage_path }}"
@@ -29,7 +28,7 @@ default_args = {
 }
 
 @dag(
-    dag_id="pl_stage_to_gold",
+    dag_id="pl_raw_to_gold",
     start_date=datetime(2025, 1, 1, tz="America/Sao_Paulo"),
     schedule=None,
     catchup=False,
@@ -48,42 +47,29 @@ default_args = {
     |   Etapas:                                                                |
     |       1. Stage -> Raw: Ingestão dos dados em formato Parquet;            |
     |       2. Raw -> Silver: Limpeza, padronização e agregação;               |
-    |       3. Silver -> Gold: Modelagem em esquema estrela e carga final no   |
-    |          Data Warehouse.                                                 |
+    |       3. Silver -> Gold: Modelagem em esquema estrela.                   |
     |                                                                          |
     +--------------------------------------------------------------------------+
     """,
 )
-def pipeline_stage_to_gold():
+def pipeline_raw_to_gold():
 
-    # Tasks do Spark
     create_output_dir_task = BashOperator(
         task_id="create_output_dir_task",
         bash_command=f"mkdir -p {OUTPUT_BASE_PATH}/{{{{ ds }}}}",
         do_xcom_push=False,
     )
 
-    stage_to_raw_task = BashOperator(
-        task_id="stage_to_raw_task",
-        bash_command=(
-            "docker exec data_transformer "
-            f"papermill {NB_STAGE_TO_RAW} "
-            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/01_etl_stage_to_raw.ipynb "
-            f"-p stage_path {STAGE_PATH} "
-            f"-p raw_path {RAW_PATH} "
-            f"-p run_mode 'latest'"
-        ),
-        do_xcom_push=False,
-    )
-
+    # Tasks do Spark
     raw_to_silver_task = BashOperator(
         task_id="raw_to_silver_task",
         bash_command=(
             "docker exec data_transformer "
             f"papermill {NB_RAW_TO_SILVER} "
-            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/02_etl_raw_to_silver.ipynb "
+            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/etl_raw_to_silver.ipynb "
             f"-p run_mode 'latest' "
             f"-p run_date None "
+            f"-p stage_path {STAGE_PATH} "
             f"-p raw_path {RAW_PATH} "
             f"-p silver_path {SILVER_PATH} "
             f"-p postgres_conn_id {POSTGRES_CONN_ID}"
@@ -96,7 +82,7 @@ def pipeline_stage_to_gold():
         bash_command=(
             "docker exec data_transformer "
             f"papermill {NB_SILVER_TO_GOLD} "
-            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/03_etl_silver_to_gold.ipynb "
+            f"{OUTPUT_BASE_PATH}/{{{{ ds }}}}/etl_silver_to_gold.ipynb "
             f"-p run_mode 'latest' "
             f"-p run_date None "
             f"-p silver_path {SILVER_PATH} "
@@ -156,12 +142,13 @@ def pipeline_stage_to_gold():
         do_xcom_push=False,
     )
 
-    create_output_dir_task >> stage_to_raw_task
+    # Orquestração
+    create_output_dir_task >> raw_to_silver_task
 
-    # Spark
-    stage_to_raw_task >> raw_to_silver_task >> silver_to_gold_task
+    raw_to_silver_task >> dbt_run_raw_task >> dbt_run_silver_task
 
-    # dbt
-    stage_to_raw_task >> dbt_run_raw_task >> dbt_run_silver_task >> dbt_run_gold_task >> dbt_test_task >> dbt_docs_generate_task
+    dbt_run_silver_task >> silver_to_gold_task
 
-pipeline_stage_to_gold()
+    dbt_run_silver_task >> dbt_run_gold_task >> dbt_test_task >> dbt_docs_generate_task
+
+pipeline_raw_to_gold()

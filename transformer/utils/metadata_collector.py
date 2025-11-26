@@ -1,65 +1,104 @@
+from pathlib import Path
 from pyspark.sql import SparkSession
-from airflow.hooks.base import BaseHook
 from airflow.utils.log.logging_mixin import LoggingMixin
 import pandas as pd
-from sqlalchemy import create_engine
-from pathlib import Path
 
 log = LoggingMixin().log
 
 
-def log_files_metadata(spark: SparkSession, bronze_path: str, processing_date: str, output_csv_path: str):
+def log_files_metadata(
+    spark: SparkSession,
+    bronze_path: str,
+    processing_date: str,
+    output_csv_path: str,
+) -> None:
     """
-    Inspeciona os arquivos na camada Bronze, coleta metadados (nº de linhas, tamanho)
-    e salva essas informações em um arquivo CSV.
+    Inspeciona os arquivos da camada Bronze, coleta metadados e salva um CSV
+    contendo informações úteis para auditoria:
+        - nome do arquivo
+        - caminho completo
+        - formato
+        - contagem de linhas
+        - tamanho em bytes
+        - data de ingestão
+
+    A leitura e inspeção são realizadas diretamente via Hadoop FileSystem.
+
+    Args:
+        spark (SparkSession): Sessão Spark ativa.
+        bronze_path (str): Caminho base da camada Bronze.
+        processing_date (str): Partição de data (YYYY-MM-DD).
+        output_csv_path (str): Caminho completo do CSV de saída.
+
+    Raises:
+        Exception: Para falhas inesperadas na leitura ou escrita de metadados.
     """
-    log.info("Iniciando a coleta de metadados da camada Bronze...")
+    try:
+        log.info("Iniciando coleta de metadados da camada Bronze.")
 
-    base_path = f"{bronze_path}/{processing_date}"
-    fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
+        base_path = f"{bronze_path}/{processing_date}"
 
-    PathHadoop = spark._jvm.org.apache.hadoop.fs.Path
+        # Acesso ao Hadoop FS via JVM
+        fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(
+            spark._jsc.hadoopConfiguration()
+        )
+        HPath = spark._jvm.org.apache.hadoop.fs.Path
 
-    format_dirs = fs.listStatus(PathHadoop(base_path))
-    metadata_list = []
+        format_dirs = fs.listStatus(HPath(base_path))
+        metadata_list = []
 
-    for format_dir_status in format_dirs:
-        format_path = format_dir_status.getPath()
-        file_format = format_path.getName().upper()
+        # Itera sobre diretórios de formato (ex.: PARQUET, CSV)
+        for format_dir in format_dirs:
+            format_path = format_dir.getPath()
+            file_format = format_path.getName().upper()
 
-        data_files_status = fs.listStatus(format_path)
-        for data_file_status in data_files_status:
-            data_path_obj = data_file_status.getPath()
-            data_path = str(data_path_obj)
-            file_name = data_path_obj.getName()
+            # Arquivos dentro de cada formato
+            data_files = fs.listStatus(format_path)
 
-            log.info(f"Coletando metadados para: {file_name}")
+            for file_status in data_files:
+                data_path_obj = file_status.getPath()
+                data_path = str(data_path_obj)
+                file_name = data_path_obj.getName()
 
-            df = spark.read.format(file_format.lower()).option("header", "true").load(data_path)
-            row_count = df.count()
+                log.info(f"Coletando metadados: {file_name}")
 
-            content_summary = fs.getContentSummary(data_path_obj)
-            file_size_bytes = content_summary.getLength()
+                # Leitura do arquivo para contagem de linhas
+                df = (
+                    spark.read.format(file_format.lower())
+                    .option("header", "true")
+                    .load(data_path)
+                )
+                row_count = df.count()
 
-            metadata_list.append({
-                "file_name": file_name,
-                "file_path": data_path,
-                "file_format": file_format,
-                "row_count": row_count,
-                "file_size_bytes": file_size_bytes,
-                "ingestion_date": processing_date
-            })
+                # Tamanho físico do arquivo
+                size_bytes = fs.getContentSummary(data_path_obj).getLength()
 
-    if not metadata_list:
-        log.warning("Nenhum metadado coletado.")
-        return
+                metadata_list.append(
+                    {
+                        "file_name": file_name,
+                        "file_path": data_path,
+                        "file_format": file_format,
+                        "row_count": row_count,
+                        "file_size_bytes": size_bytes,
+                        "ingestion_date": processing_date,
+                    }
+                )
 
-    log.info(f"Salvando {len(metadata_list)} registros de metadados...")
-    metadata_df = pd.DataFrame(metadata_list)
+        if not metadata_list:
+            log.warning("Nenhum metadado encontrado.")
+            return
 
-    output_file = Path(output_csv_path)
-    output_file.parent.mkdir(parents=True, exist_ok=True)
+        # Conversão para Pandas e persistência
+        log.info(f"Salvando {len(metadata_list)} registros de metadados.")
+        metadata_df = pd.DataFrame(metadata_list)
 
-    metadata_df.to_csv(output_file, index=False)
+        output_file = Path(output_csv_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    log.info("Metadados salvos com sucesso.")
+        metadata_df.to_csv(output_file, index=False)
+
+        log.info("Metadados salvos com sucesso.")
+
+    except Exception as e:
+        log.error(f"[ERROR] Falha durante coleta de metadados Bronze: {e}")
+        raise

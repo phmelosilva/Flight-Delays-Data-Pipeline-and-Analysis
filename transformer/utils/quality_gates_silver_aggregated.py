@@ -6,48 +6,52 @@ log = get_logger("quality_gates_silver_aggregated")
 
 def _check_row_count_not_empty(df: DataFrame) -> None:
     """
-    Verifica se o DataFrame agregado não está vazio.
+    Verifica se o DataFrame não está vazio.
 
     Args:
-        df (DataFrame): DataFrame agregado a ser validado.
+        df (DataFrame): Dataset a ser validado.
 
     Raises:
-        ValueError: Se o DataFrame estiver vazio.
+        ValueError: Se o DataFrame não possuir registros.
     """
     if df.limit(1).count() == 0:
-        raise ValueError("[Quality][Aggregate] _check_row_count_not_empty: Fail")
+        raise ValueError("[Quality][Aggregate] Dataset agregado vazio.")
 
-    log.info("[Quality][Aggregate]      _check_row_count_not_empty: OK")
+    log.info("[Quality][Aggregate]      _check_row_count_not_empty: OK.")
+
 
 def _check_unique_primary_key(df: DataFrame, key: str = "flight_id") -> None:
     """
-    Garante unicidade da chave primária do dataset agregado.
+    Verifica unicidade da chave primária do dataset agregado.
 
     Args:
-        df: DataFrame a ser validado.
-        key: Nome da coluna que representa a PK.
+        df (DataFrame): Dataset a ser validado.
+        key (str): Nome da coluna que representa a PK.
 
     Raises:
         ValueError: Se houver chaves duplicadas.
     """
     dups = (
         df.groupBy(F.col(key))
-        .count()
-        .filter(F.col("count") > 1)
-        .count()
+          .count()
+          .filter(F.col("count") > 1)
+          .count()
     )
+
     if dups > 0:
         raise ValueError(
-            f"[Quality][Aggregate] _check_unique_primary_key: FAIL. PK duplicada em {dups:,} linhas (chave='{key}')."
+            f"[Quality][Aggregate] primary key duplicada em {dups:,} registros "
+            f"(coluna '{key}')."
         )
 
-    log.info(f"[Quality][Aggregate]     _check_unique_primary_key: OK")
+    log.info("[Quality][Aggregate]      _check_unique_primary_key: OK.")
+
 
 def _check_no_null_in_dimensions(df: DataFrame) -> None:
     """
     Verifica se dimensões críticas não possuem valores nulos.
 
-    As colunas abaixo são consideradas obrigatórias após a agregação:
+    As colunas obrigatórias são:
         - airline_iata_code
         - airline_name
         - origin_airport_iata_code
@@ -60,10 +64,11 @@ def _check_no_null_in_dimensions(df: DataFrame) -> None:
         - dest_longitude
 
     Args:
-        df: DataFrame agregado.
+        df (DataFrame): Dataset a ser validado.
 
     Raises:
-        ValueError: Se qualquer coluna crítica possuir nulos.
+        KeyError: Se uma coluna crítica estiver ausente.
+        ValueError: Se houver valores nulos em colunas críticas.
     """
     critical_cols = [
         "airline_iata_code",
@@ -79,11 +84,13 @@ def _check_no_null_in_dimensions(df: DataFrame) -> None:
     ]
 
     cols_with_nulls = []
+
     for col in critical_cols:
         if col not in df.columns:
             raise KeyError(
-                f"[Quality][Aggregate] _check_no_null_in_dimensions: FAIL. Coluna crítica '{col}' ausente do dataset agregado."
+                f"[Quality][Aggregate] Coluna crítica ausente: '{col}'."
             )
+
         nulls = df.filter(F.col(col).isNull()).count()
         if nulls > 0:
             cols_with_nulls.append((col, nulls))
@@ -91,26 +98,26 @@ def _check_no_null_in_dimensions(df: DataFrame) -> None:
     if cols_with_nulls:
         details = ", ".join([f"{c}={n:,}" for c, n in cols_with_nulls])
         raise ValueError(
-            f"[Quality][Aggregate] _check_no_null_in_dimensions: FAIL. Dimensões críticas com nulos: {details}."
+            f"[Quality][Aggregate] Nulos encontrados em dimensões críticas: {details}."
         )
 
-    log.info("[Quality][Aggregate]      _check_no_null_in_dimensions: OK")
+    log.info("[Quality][Aggregate]      _check_no_null_in_dimensions: OK.")
+
 
 def _check_positive_distance(df: DataFrame) -> None:
     """
     Verifica se todos os valores de distância são positivos.
-
-    Registros sem valor informado são ignorados.
+    Registros com distância nula são ignorados.
 
     Args:
-        df: DataFrame agregado contendo a coluna 'distance'.
+        df (DataFrame): Dataset contendo a coluna 'distance'.
 
     Raises:
         ValueError: Se existirem distâncias menores ou iguais a zero.
     """
     if "distance" not in df.columns:
         log.info(
-            "[Quality][Aggregate] _check_positive_distance: FAIL. Coluna 'distance' ausente"
+            "[Quality][Aggregate] _check_positive_distance: coluna 'distance' ausente; ignorando verificação."
         )
         return
 
@@ -120,26 +127,28 @@ def _check_positive_distance(df: DataFrame) -> None:
 
     if invalid > 0:
         raise ValueError(
-            f"[Quality][Aggregate] _check_positive_distance: FAIL. {invalid:,} registros com distância não positiva."
+            f"[Quality][Aggregate] {invalid:,} registros com distância não positiva."
         )
 
-    log.info("[Quality][Aggregate]      _check_positive_distance: OK")
+    log.info("[Quality][Aggregate]      _check_positive_distance: OK.")
+
 
 def _check_departure_before_arrival(df: DataFrame) -> None:
     """
-    Verifica se o horário de partida ocorre antes do horário de chegada.
-
-    Registros com horários nulos são ignorados.
+    Verifica se departure_time < arrival_time.
+    Registros nulos são ignorados.
 
     Args:
-        df: DataFrame agregado contendo as colunas 'departure_time' e 'arrival_time'.
+        df (DataFrame): Dataset contendo 'departure_time' e 'arrival_time'.
 
     Raises:
-        ValueError: Se houver registros com partida posterior ou igual à chegada.
+        ValueError: Se houver registros inválidos.
     """
     for col in ["departure_time", "arrival_time"]:
         if col not in df.columns:
-            log.info("[Quality][Aggregate] _check_departure_before_arrival: FAIL. Colunas de horário incompletas")
+            log.info(
+                "[Quality][Aggregate] _check_departure_before_arrival: colunas incompletas; ignorando verificação."
+            )
             return
 
     invalid = df.filter(
@@ -149,63 +158,57 @@ def _check_departure_before_arrival(df: DataFrame) -> None:
     ).count()
 
     if invalid > 0:
-        raise ValueError(f"[Quality][Aggregate] _check_departure_before_arrival: FAIL. {invalid:,} voos com departure_time >= arrival_time.")
+        raise ValueError(
+            f"[Quality][Aggregate] {invalid:,} voos com departure_time >= arrival_time."
+        )
 
-    log.info("[Quality][Aggregate]      _check_departure_before_arrival: OK")
+    log.info("[Quality][Aggregate]      _check_departure_before_arrival: OK.")
+
 
 def _check_origin_dest_different(df: DataFrame) -> None:
     """
-    Verifica se o aeroporto de origem e destino não são iguais.
-
-    Usa as colunas:
-        - origin_airport_iata_code
-        - dest_airport_iata_code
+    Verifica se origem e destino não são iguais.
 
     Args:
-        df: DataFrame agregado.
+        df (DataFrame): Dataset contendo códigos IATA de origem e destino.
 
     Raises:
-        ValueError: Se existirem registros com origem e destino idênticos.
+        ValueError: Se houver registros com origem == destino.
     """
     for col in ["origin_airport_iata_code", "dest_airport_iata_code"]:
         if col not in df.columns:
             log.info(
-                "[Quality][Aggregate] Colunas de origem/destino incompletas; "
-                "pulando check origin_dest_different."
+                f"[Quality][Aggregate] {col} incompleta, ignorando verificação."
             )
             return
 
     same = df.filter(
         F.col("origin_airport_iata_code").isNotNull()
         & F.col("dest_airport_iata_code").isNotNull()
-        & (F.col("origin_airport_iata_code") == F.col("dest_airport_iata_code"))
+        & (
+            F.col("origin_airport_iata_code")
+            == F.col("dest_airport_iata_code")
+        )
     ).count()
 
     if same > 0:
         raise ValueError(
-            f"[Quality][Aggregate] {same:,} voos com origem == destino "
-            "(origin_airport_iata_code == dest_airport_iata_code)."
+            f"[Quality][Aggregate] {same:,} voos com origem igual ao destino."
         )
 
-    log.info("[Quality][Aggregate]      _check_origin_dest_different: OK")
+    log.info("[Quality][Aggregate]      _check_origin_dest_different: OK.")
+
 
 def run_quality_gates_silver_aggregated(df: DataFrame) -> None:
     """
-    Executa o conjunto de verificações de qualidade para o dataset agregado da Silver.
-
-    Checks executados:
-        - row_count_not_empty
-        - unique_primary_key (flight_id)
-        - no_null_in_dimensions (dimensões críticas)
-        - positive_distance
-        - departure_before_arrival
-        - origin_dest_different
+    Executa todas as validações de qualidade para o dataset agregado da Silver.
 
     Args:
-        df: DataFrame agregado resultante da união de flights, airlines e airports.
+        df (DataFrame): Dataset agregado (flights + airlines + airports).
 
     Raises:
-        ValueError: Se qualquer verificação de qualidade falhar.
+        ValueError: Para qualquer problema identificado nas validações.
+        KeyError: Se colunas obrigatórias estiverem ausentes.
     """
     log.info("[Quality][Aggregate] Iniciando validações do dataset agregado.")
 
@@ -216,4 +219,4 @@ def run_quality_gates_silver_aggregated(df: DataFrame) -> None:
     _check_departure_before_arrival(df)
     _check_origin_dest_different(df)
 
-    log.info("[Quality][Aggregate] Validações concluídas.")
+    log.info("[Quality][Aggregate] Validações concluídas com sucesso.")

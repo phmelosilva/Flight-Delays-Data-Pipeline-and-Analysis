@@ -4,150 +4,145 @@ from transformer.utils.logger import get_logger
 log = get_logger("quality_gates_gold")
 
 
-# Verificação de unicidade
 def _check_unique(df: DataFrame, column: str, name: str) -> None:
     """
-    Valida que todos os valores de uma coluna sejam únicos.
+    Verifica se uma coluna possui valores únicos no DataFrame.
 
     Args:
-        df (DataFrame): DataFrame a ser verificado.
-        column (str): Nome da coluna cuja unicidade será testada.
-        name (str): Identificador lógico do dataset em validação.
+        df (DataFrame): DataFrame a ser validado.
+        column (str): Nome da coluna a ser verificada quanto à unicidade.
+        name (str): Nome lógico do dataset (ex.: 'dim_airline').
 
     Raises:
-        ValueError: Se existirem valores duplicados na coluna especificada.
+        ValueError: Se forem encontrados valores duplicados na coluna.
     """
-    duplicates = df.groupBy(column).count().filter(F.col("count") > 1)
-    if duplicates.count() > 0:
-        raise ValueError(f"[Quality] {name}: valores duplicados em '{column}'.")
-
-    log.info(f"[Quality]                _check_unique: '{column}' OK.")
-
-
-# Verificação de valores nulos
-def _check_no_nulls(df: DataFrame, columns: list[str], name: str) -> None:
-    """
-    Valida que nenhuma das colunas especificadas contenha valores nulos.
-
-    Args:
-        df (DataFrame): DataFrame a ser verificado.
-        columns (list[str]): Lista de colunas críticas que não devem conter nulos.
-        name (str): Identificador lógico do dataset em validação.
-
-    Raises:
-        ValueError: Se qualquer coluna crítica contiver valores nulos.
-    """
-    for c in columns:
-        nulls = df.filter(F.col(c).isNull())
-        if nulls.count() > 0:
-            raise ValueError(f"[Quality] {name}: valores nulos encontrados em '{c}'.")
-
-    log.info(f"[Quality]                _check_no_nulls: {name} OK.")
-
-# Verificação de integridade referencial
-def _check_fk_integrity(
-    df_fact: DataFrame,
-    df_dim: DataFrame,
-    fk_col: str,
-    dim_col: str,
-    fact_name: str,
-    dim_name: str
-) -> None:
-    """
-    Valida a integridade referencial entre um DataFrame de fatos e uma dimensão.
-
-    Args:
-        df_fact (DataFrame): DataFrame da tabela fato.
-        df_dim (DataFrame): DataFrame da tabela dimensão.
-        fk_col (str): Coluna de chave estrangeira no fato.
-        dim_col (str): Coluna de chave primária na dimensão.
-        fact_name (str): Nome lógico do fato (para logs).
-        dim_name (str): Nome lógico da dimensão (para logs).
-
-    Raises:
-        ValueError: Se existirem chaves estrangeiras sem correspondência na dimensão.
-    """
-    fact_alias = df_fact.select(F.col(fk_col).alias("fact_fk")).distinct()
-    dim_alias = df_dim.select(F.col(dim_col).alias("dim_pk")).distinct()
-
-    missing = (
-        fact_alias
-        .join(dim_alias, on=F.col("fact_fk") == F.col("dim_pk"), how="left_anti")
+    duplicates = (
+        df.select(column)
+          .groupBy(column)
+          .agg(F.count("*").alias("cnt"))
+          .filter(F.col("cnt") > 1)
     )
 
-    missing_count = missing.count()
-    if missing_count > 0:
+    if duplicates.limit(1).count() > 0:
         raise ValueError(
-            f"[Quality] Integridade violada: {missing_count} chaves de "
-            f"{fact_name}.{fk_col} não encontradas em {dim_name}.{dim_col}."
+            f"[Quality][Gold] {name}: valores duplicados em '{column}'."
         )
 
-    log.info(f"[Quality]                _check_fk_integrity: [{fact_name}] '{fk_col}' <---> '{dim_name}.{dim_col}' OK.")
+    log.info(f"[Quality][Gold]      _check_unique: '{column}' OK.")
 
 
-# Executor principal
-def run_quality_gates_gold(
-    dim_airline: DataFrame,
-    dim_airport: DataFrame,
-    dim_date: DataFrame,
-    fato_flights: DataFrame,
-) -> None:
+def _check_no_nulls(df: DataFrame, columns: list[str], name: str) -> None:
     """
-    Executa o conjunto de verificações de qualidade da camada gold.
+    Verifica se colunas obrigatórias não possuem valores nulos.
 
     Args:
-        dim_airline (DataFrame): Dataset da dimensão de companhias aéreas.
-        dim_airport (DataFrame): Dataset da dimensão de aeroportos.
-        dim_date (DataFrame): Dataset da dimensão de datas.
-        fato_flights (DataFrame): Dataset da tabela fato de voos.
+        df (DataFrame): DataFrame a ser validado.
+        columns (list[str]): Lista de colunas obrigatórias.
+        name (str): Nome lógico do dataset (ex.: 'fato_flights').
 
     Raises:
-        ValueError: Se qualquer verificação de qualidade falhar.
+        ValueError: Se qualquer coluna obrigatória possuir valores nulos.
     """
-    log.info("[Quality] Iniciando validações.")
+    # Cria filtro 'OR' para detectar valores nulos nas colunas obrigatórias
+    null_filter = F.col(columns[0]).isNull()
+    for col in columns[1:]:
+        null_filter |= F.col(col).isNull()
 
-    # Unicidade das pks e naturais
+    has_nulls = df.filter(null_filter).limit(1).count() > 0
+
+    if has_nulls:
+        problem_cols = [
+            col for col in columns
+            if df.filter(F.col(col).isNull()).limit(1).count() > 0
+        ]
+        raise ValueError(
+            f"[Quality][Gold] {name}: valores nulos encontrados nas colunas: {problem_cols}."
+        )
+
+    log.info(f"[Quality][Gold]      _check_no_nulls: {name} OK.")
+
+
+def _check_fk_integrity(df_fact, df_dim, fk_col, dim_col, fact_name, dim_name) -> None:
+    """
+    Verifica integridade referencial entre fato e dimensão.
+
+    Args:
+        df_fact (DataFrame): Dataset de fatos.
+        df_dim (DataFrame): Dataset da dimensão correspondente.
+        fk_col (str): Coluna FK no fato.
+        dim_col (str): Coluna PK na dimensão.
+        fact_name (str): Nome lógico do fato.
+        dim_name (str): Nome lógico da dimensão.
+
+    Raises:
+        ValueError: Se existirem chaves no fato que não possuem correspondência na dimensão.
+    """
+    fact_keys = df_fact.select(F.col(fk_col).alias("fk")).distinct()
+    dim_keys = df_dim.select(F.col(dim_col).alias("pk")).distinct()
+
+    # Busca chaves ausentes na dimensão
+    missing = fact_keys.join(dim_keys, fact_keys.fk == dim_keys.pk, "left_anti")
+
+    if missing.limit(1).count() > 0:
+        count_missing = missing.count()
+        raise ValueError(
+            f"[Quality][Gold] Integridade violada: {count_missing} "
+            f"chaves de {fact_name}.{fk_col} não encontradas em {dim_name}.{dim_col}."
+        )
+
+    log.info(
+        f"[Quality][Gold]           _check_fk_integrity: "
+        f"[{fact_name}] '{fk_col}' <-> '{dim_name}.{dim_col}' OK."
+    )
+
+
+def run_quality_gates_gold(dim_airline, dim_airport, dim_date, fato_flights) -> None:
+    """
+    Executa todas as validações da camada Gold.
+
+    Args:
+        dim_airline (DataFrame): Dimensão de companhias aéreas.
+        dim_airport (DataFrame): Dimensão de aeroportos.
+        dim_date (DataFrame): Dimensão de datas.
+        fato_flights (DataFrame): Tabela fato de voos.
+
+    Raises:
+        ValueError: Caso qualquer validação falhe.
+    """
+    log.info("[Quality][Gold] Iniciando validações.")
+
+    # Cache para melhorar desempenho em múltiplas verificações
+    dim_airline.cache()
+    dim_airport.cache()
+    dim_date.cache()
+    fato_flights.cache()
+
     _check_unique(dim_airline, "airline_iata_code", "dim_airline")
     _check_unique(dim_airport, "airport_iata_code", "dim_airport")
     _check_unique(dim_date, "full_date", "dim_date")
     _check_unique(fato_flights, "flight_id", "fato_flights")
 
-    # Ausência de nulos nas fks
-    fk_cols = ["airline_id", "origin_airport_id", "dest_airport_id", "full_date"]
-    _check_no_nulls(fato_flights, fk_cols, "fato_flights")
-
-    # Integridade referencial fato -> dimensões
-    _check_fk_integrity(
+    _check_no_nulls(
         fato_flights,
-        dim_airline,
-        "airline_id",
-        "airline_id",
+        ["airline_id", "origin_airport_id", "dest_airport_id", "full_date"],
         "fato_flights",
-        "dim_airline"
-    )
-    _check_fk_integrity(
-        fato_flights,
-        dim_airport,
-        "origin_airport_id",
-        "airport_id",
-        "fato_flights",
-        "dim_airport"
-    )
-    _check_fk_integrity(
-        fato_flights,
-        dim_airport,
-        "dest_airport_id",
-        "airport_id",
-        "fato_flights",
-        "dim_airport"
-    )
-    _check_fk_integrity(
-        fato_flights,
-        dim_date,
-        "full_date",
-        "full_date",
-        "fato_flights",
-        "dim_date"
     )
 
-    log.info("[Quality] Todas as validações concluídas com sucesso.")
+    _check_fk_integrity(
+        fato_flights, dim_airline, "airline_id", "airline_id",
+        "fato_flights", "dim_airline",
+    )
+    _check_fk_integrity(
+        fato_flights, dim_airport, "origin_airport_id", "airport_id",
+        "fato_flights", "dim_airport",
+    )
+    _check_fk_integrity(
+        fato_flights, dim_airport, "dest_airport_id", "airport_id",
+        "fato_flights", "dim_airport",
+    )
+    _check_fk_integrity(
+        fato_flights, dim_date, "full_date", "full_date",
+        "fato_flights", "dim_date",
+    )
+
+    log.info("[Quality][Gold] Todas as validações concluídas com sucesso.")

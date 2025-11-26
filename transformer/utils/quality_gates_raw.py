@@ -1,11 +1,10 @@
-from pyspark.sql import DataFrame
 from typing import List
+from pyspark.sql import DataFrame
 from transformer.utils.logger import get_logger
 
 log = get_logger("quality_gates_raw")
 
 
-# Row Count Not Empty
 def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
     """
     Verifica se o DataFrame não está vazio.
@@ -15,18 +14,18 @@ def _check_row_count_not_empty(df: DataFrame, name: str) -> None:
         name (str): Nome lógico do dataset (ex.: 'raw_flights').
 
     Raises:
-        ValueError: Se o DataFrame estiver vazio.
+        ValueError: Se o DataFrame não possuir registros.
     """
+    # Garante que o dataset possui ao menos uma linha
     if df.rdd.isEmpty():
         raise ValueError(f"[Quality][Raw] O dataset '{name}' está vazio.")
 
-    log.info(f"[Quality][Raw]       _check_row_count_not_empty: OK")
+    log.info(f"[Quality][Raw]       _check_row_count_not_empty: {name} OK.")
 
 
-# Schema Validation
 def _check_schema_columns(df: DataFrame, required_columns: List[str], name: str) -> None:
     """
-    Confirma que todas as colunas obrigatórias estão presentes no DataFrame.
+    Verifica se todas as colunas obrigatórias estão presentes no DataFrame.
 
     Args:
         df (DataFrame): Dataset a ser validado.
@@ -36,17 +35,19 @@ def _check_schema_columns(df: DataFrame, required_columns: List[str], name: str)
     Raises:
         ValueError: Se alguma coluna obrigatória estiver ausente.
     """
+    # Identifica colunas ausentes relativas ao schema esperado
     missing = set(required_columns) - set(df.columns)
     if missing:
-        raise ValueError(f"[Quality][Raw] '{name}' possui colunas ausentes: {missing}.")
+        raise ValueError(
+            f"[Quality][Raw] '{name}' possui colunas ausentes: {sorted(missing)}."
+        )
 
-    log.info(f"[Quality][Raw]       _check_schema_columns: OK")
+    log.info(f"[Quality][Raw]       _check_schema_columns: {name} OK.")
 
 
-# Executor
 def run_quality_gates_raw(df: DataFrame, name: str, required_columns: List[str]) -> None:
     """
-    Executa as verificações de qualidade da camada Raw.
+    Executa as validações de qualidade da camada Raw.
 
     Args:
         df (DataFrame): Dataset a ser validado.
@@ -54,7 +55,7 @@ def run_quality_gates_raw(df: DataFrame, name: str, required_columns: List[str])
         required_columns (List[str]): Lista de colunas obrigatórias.
 
     Raises:
-        ValueError: Se qualquer verificação falhar.
+        ValueError: Caso alguma verificação falhe.
     """
     log.info(f"[Quality][Raw] Iniciando validações do dataset '{name}'.")
 
