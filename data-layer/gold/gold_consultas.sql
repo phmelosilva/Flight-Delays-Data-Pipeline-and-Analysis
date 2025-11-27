@@ -8,7 +8,7 @@
 -- Banco de Dados(nome) ...: dw
 -- 
 -- Objetivo ...............: Consultas para alimentar o Dashboard de Performance de Voos.
--- Tabela Principal .......: gold.fato_flights
+-- Tabela Principal .......: gold.fat_flt
 --
 -- ------------------------------------------------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ SELECT
     -- Métrica 3: Porcentagem de Voos com Atraso
     (SUM(CASE WHEN f.arrival_delay > 0 THEN 1 ELSE 0 END) / COUNT(f.flight_id)::float) * 100 AS pct_voos_com_atraso
 FROM
-    fato_flights AS f;
+    fat_flt AS f;
 
 
 -- =======================================================================================================================
@@ -42,9 +42,9 @@ SELECT
     AVG(f.arrival_delay) AS media_atraso, -- Eixo Y
     SUM(f.arrival_delay) AS impacto_total_atraso -- Tamanho da bolha
 FROM
-    fato_flights AS f
+    fat_flt AS f
 JOIN
-    dim_airline AS a ON f.airline_id = a.airline_id
+    dim_air AS a ON f.airline_id = a.airline_id
 GROUP BY
     a.airline_name;
 
@@ -61,9 +61,9 @@ SELECT
     AVG(f.arrival_delay) AS media_atraso,   -- Eixo Y
     SUM(f.arrival_delay) AS impacto_total_atraso -- Tamanho da bolha
 FROM
-    fato_flights AS f
+    fat_flt AS f
 JOIN
-    dim_airport AS ap ON f.origin_airport_id = ap.airport_id
+    dim_apt AS ap ON f.origin_airport_id = ap.airport_id
 GROUP BY
     ap.airport_name,
     ap.city_name,
@@ -78,9 +78,9 @@ SELECT
     d.day_of_week, -- Eixo X
     AVG(f.arrival_delay) AS media_atraso -- Eixo Y
 FROM
-    fato_flights AS f
+    fat_flt AS f
 JOIN
-    dim_date AS d ON f.date_id = d.date_id
+    dim_dat AS d ON f.date_id = d.date_id
 GROUP BY
     d.day_of_week
 ORDER BY
@@ -95,9 +95,9 @@ SELECT
     d.month, -- Eixo X
     AVG(f.arrival_delay) AS media_atraso -- Eixo Y
 FROM
-    fato_flights AS f
+    fat_flt AS f
 JOIN
-    dim_date AS d ON f.date_id = d.date_id
+    dim_dat AS d ON f.date_id = d.date_id
 GROUP BY
     d.month
 ORDER BY
@@ -115,6 +115,6 @@ SELECT
     SUM(f.late_aircraft_delay) AS total_atraso_aeronave,
     SUM(f.weather_delay) AS total_atraso_clima
 FROM
-    fato_flights AS f
+    fat_flt AS f
 WHERE
     f.arrival_delay > 0;

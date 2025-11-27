@@ -157,16 +157,16 @@ models:
         description: Longitude geográfica do aeroporto de destino.
 
       - name: scheduled_departure
-        description: Horário programado de partida no formato HHMM.
+        description: Horário programado de partida.
 
       - name: departure_time
-        description: Horário real de partida no formato HHMM.
+        description: Horário real de partida.
 
       - name: scheduled_arrival
-        description: Horário programado de chegada no formato HHMM.
+        description: Horário programado de chegada.
 
       - name: arrival_time
-        description: Horário real de chegada no formato HHMM.
+        description: Horário real de chegada.
 
       - name: wheels_off
         description: Horário em que a aeronave decolou (saiu do solo).

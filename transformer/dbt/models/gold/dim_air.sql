@@ -1,4 +1,4 @@
--- Model: dim_airline
+-- Model: dim_air
 -- Descrição: Dimensão de companhias aéreas derivada da tabela OBT.
 
 {{ config(

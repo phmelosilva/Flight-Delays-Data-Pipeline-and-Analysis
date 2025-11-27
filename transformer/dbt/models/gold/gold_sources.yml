@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  # dim_airline
-  - name: dim_airline
+  # dim_air
+  - name: dim_air
     description: "Dimensão de companhias aéreas utilizadas nos voos de 2015 nos EUA."
     tests:
       - not_empty
@@ -23,8 +23,8 @@ models:
       - name: airline_name
         description: "Nome da companhia aérea."
 
-  # dim_airport
-  - name: dim_airport
+  # dim_apt
+  - name: dim_apt
     description: "Dimensão de aeroportos dos EUA com base nos dados de 2015 do USDOT (via Kaggle)."
     tests:
       - not_empty
@@ -56,8 +56,8 @@ models:
       - name: longitude
         description: "Longitude do aeroporto."
 
-  # dim_date
-  - name: dim_date
+  # dim_dat
+  - name: dim_dat
     description: "Dimensão de datas derivada das observações de voo do ano de 2015."
     tests:
       - not_empty
@@ -84,8 +84,8 @@ models:
       - name: is_holiday
         description: "Indica feriados nacionais dos EUA baseados no calendário oficial de 2015."
 
-  # fato_flights
-  - name: fato_flights
+  # fat_flt
+  - name: fat_flt
     description: "Tabela fato principal contendo métricas operacionais dos voos de 2015."
     tests:
       - not_empty
@@ -100,22 +100,22 @@ models:
 
       - fk_exists:
           column: airline_id
-          fk_model: ref('dim_airline')
+          fk_model: ref('dim_air')
           fk_column: airline_id
 
       - fk_exists:
           column: origin_airport_id
-          fk_model: ref('dim_airport')
+          fk_model: ref('dim_apt')
           fk_column: airport_id
 
       - fk_exists:
           column: dest_airport_id
-          fk_model: ref('dim_airport')
+          fk_model: ref('dim_apt')
           fk_column: airport_id
 
       - fk_exists:
           column: full_date
-          fk_model: ref('dim_date')
+          fk_model: ref('dim_dat')
           fk_column: full_date
 
     columns:

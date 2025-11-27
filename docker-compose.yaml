@@ -53,6 +53,7 @@ x-airflow-common: &airflow-common
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/data-layer:/opt/airflow/data-layer
     - ${AIRFLOW_PROJ_DIR:-.}/transformer:/opt/airflow/transformer
+    - /var/run/docker.sock:/var/run/docker.sock
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     postgres:
@@ -86,9 +87,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./dw-data:/var/lib/postgresql/data
-      - ./data-layer/raw/000_create_schemas.sql:/docker-entrypoint-initdb.d/000_create_schemas.sql
-      - ./data-layer/silver/001_create_table_silver.sql:/docker-entrypoint-initdb.d/001_create_table_silver.sql
-      - ./data-layer/gold/002_create_table_gold.sql:/docker-entrypoint-initdb.d/002_create_table_gold.sql
+      - ./data-layer/raw/raw_ddl.sql:/docker-entrypoint-initdb.d/raw_ddl.sql
+      - ./data-layer/silver/silver_ddl.sql:/docker-entrypoint-initdb.d/silver_ddl.sql
+      - ./data-layer/gold/gold_ddl.sql:/docker-entrypoint-initdb.d/gold_ddl.sql
     ports:
       - 5432:5432
     networks:

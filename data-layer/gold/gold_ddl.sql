@@ -9,14 +9,16 @@
 --
 -- Últimas alterações:
 --      08/11/2025 => Altera atributos com datas para TIMESTAMP;
---                 => Adiciona atributo "is_overnight_flight" na tabela "fato_flights";
---                 => Remove atributo "date_id" da tabela "dim_date";
---                 => Altera modelagem nas tabelas "dim_date" e "fato_flights";
+--                 => Adiciona atributo "is_overnight_flight" na tabela "fat_flt";
+--                 => Remove atributo "date_id" da tabela "dim_dat";
+--                 => Altera modelagem nas tabelas "dim_dat" e "fat_flt";
 --
---      09/11/2025 => Remove atributo 'date_id' da tabela 'dim_date';
---                 => Altera modelagem nas tabelas 'dim_date' e 'fato_flights';
+--      09/11/2025 => Remove atributo 'date_id' da tabela 'dim_dat';
+--                 => Altera modelagem nas tabelas 'dim_dat' e 'fat_flt';
 --                 => Adiciona CASCADE para operações de DELETE e UPDATE;
 --                 => Corrige tipos dos atributos 'airport_id', 'airline_id' e 'flight_id';
+--
+--      26/11/2025 => Padroniza com de acordo com o mnemônico;
 --
 -- PROJETO => 05 Base de Dados
 --         => 13 Tabelas
@@ -27,7 +29,7 @@ CREATE SCHEMA IF NOT EXISTS gold;
 SET search_path TO gold;
 
 
-CREATE TABLE IF NOT EXISTS dim_airport (
+CREATE TABLE IF NOT EXISTS dim_apt (
     airport_id BIGSERIAL,
     airport_iata_code VARCHAR(3) UNIQUE NOT NULL,
     airport_name VARCHAR(100) NOT NULL,
@@ -41,13 +43,13 @@ CREATE TABLE IF NOT EXISTS dim_airport (
     longitude DOUBLE PRECISION
 );
 
-CREATE TABLE IF NOT EXISTS dim_airline (
+CREATE TABLE IF NOT EXISTS dim_air (
     airline_id BIGSERIAL,
     airline_iata_code VARCHAR(3) UNIQUE NOT NULL,
     airline_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS dim_date (
+CREATE TABLE IF NOT EXISTS dim_dat (
     full_date DATE,
     year SMALLINT NOT NULL,
     month SMALLINT NOT NULL,
@@ -57,7 +59,7 @@ CREATE TABLE IF NOT EXISTS dim_date (
     is_holiday BOOLEAN DEFAULT FALSE
 );
 
-CREATE TABLE IF NOT EXISTS fato_flights (
+CREATE TABLE IF NOT EXISTS fat_flt (
     flight_id BIGINT,
     full_date DATE NOT NULL,
     airline_id BIGINT NOT NULL,
@@ -89,38 +91,38 @@ CREATE TABLE IF NOT EXISTS fato_flights (
     weather_delay DOUBLE PRECISION DEFAULT 0
 );
 
-ALTER TABLE dim_airport ADD CONSTRAINT pk_dim_airport PRIMARY KEY (airport_id);
-ALTER TABLE dim_airline ADD CONSTRAINT pk_dim_airline PRIMARY KEY (airline_id);
-ALTER TABLE dim_date ADD CONSTRAINT pk_dim_date PRIMARY KEY (full_date);
-ALTER TABLE fato_flights ADD CONSTRAINT pk_fato_flights PRIMARY KEY (flight_id);
+ALTER TABLE dim_apt ADD CONSTRAINT pk_dim_apt PRIMARY KEY (airport_id);
+ALTER TABLE dim_air ADD CONSTRAINT pk_dim_air PRIMARY KEY (airline_id);
+ALTER TABLE dim_dat ADD CONSTRAINT pk_dim_dat PRIMARY KEY (full_date);
+ALTER TABLE fat_flt ADD CONSTRAINT pk_fat_flt PRIMARY KEY (flight_id);
 
-ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_full_date
-    FOREIGN KEY (full_date) REFERENCES dim_date(full_date)
+ALTER TABLE fat_flt ADD CONSTRAINT fk_fat_flt_full_date
+    FOREIGN KEY (full_date) REFERENCES dim_dat(full_date)
     ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_airline_id
-    FOREIGN KEY (airline_id) REFERENCES dim_airline(airline_id)
+ALTER TABLE fat_flt ADD CONSTRAINT fk_fat_flt_airline_id
+    FOREIGN KEY (airline_id) REFERENCES dim_air(airline_id)
     ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_origin_airport_id
-    FOREIGN KEY (origin_airport_id) REFERENCES dim_airport(airport_id)
+ALTER TABLE fat_flt ADD CONSTRAINT fk_fat_flt_origin_airport_id
+    FOREIGN KEY (origin_airport_id) REFERENCES dim_apt(airport_id)
     ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE fato_flights ADD CONSTRAINT fk_fato_flights_dest_airport_id
-    FOREIGN KEY (dest_airport_id) REFERENCES dim_airport(airport_id)
+ALTER TABLE fat_flt ADD CONSTRAINT fk_fat_flt_dest_airport_id
+    FOREIGN KEY (dest_airport_id) REFERENCES dim_apt(airport_id)
     ON DELETE CASCADE ON UPDATE CASCADE;
 
-CREATE INDEX IF NOT EXISTS idx_flights_date ON fato_flights(full_date);
-CREATE INDEX IF NOT EXISTS idx_flights_airline ON fato_flights(airline_id);
-CREATE INDEX IF NOT EXISTS idx_flights_origin ON fato_flights(origin_airport_id);
-CREATE INDEX IF NOT EXISTS idx_flights_dest ON fato_flights(dest_airport_id);
+CREATE INDEX IF NOT EXISTS idx_flights_date ON fat_flt(full_date);
+CREATE INDEX IF NOT EXISTS idx_flights_airline ON fat_flt(airline_id);
+CREATE INDEX IF NOT EXISTS idx_flights_origin ON fat_flt(origin_airport_id);
+CREATE INDEX IF NOT EXISTS idx_flights_dest ON fat_flt(dest_airport_id);
 
-CREATE INDEX IF NOT EXISTS idx_fato_flights_arrival_delay ON fato_flights (arrival_delay);
-CREATE INDEX IF NOT EXISTS idx_fato_flights_scheduled_departure ON fato_flights (scheduled_departure);
-CREATE INDEX IF NOT EXISTS idx_fato_flights_scheduled_time ON fato_flights (scheduled_time);
+CREATE INDEX IF NOT EXISTS idx_fat_flt_arrival_delay ON fat_flt (arrival_delay);
+CREATE INDEX IF NOT EXISTS idx_fat_flt_scheduled_departure ON fat_flt (scheduled_departure);
+CREATE INDEX IF NOT EXISTS idx_fat_flt_scheduled_time ON fat_flt (scheduled_time);
 
-CREATE INDEX IF NOT EXISTS idx_dim_airline_airline_name ON dim_airline (airline_name);
-CREATE INDEX IF NOT EXISTS idx_dim_airport_airport_name ON dim_airport (airport_name);
-CREATE INDEX IF NOT EXISTS idx_dim_airport_state_code ON dim_airport (state_code);
+CREATE INDEX IF NOT EXISTS idx_dim_air_airline_name ON dim_air (airline_name);
+CREATE INDEX IF NOT EXISTS idx_dim_apt_airport_name ON dim_apt (airport_name);
+CREATE INDEX IF NOT EXISTS idx_dim_apt_state_code ON dim_apt (state_code);
 
 COMMENT ON SCHEMA gold IS 'Modelagem Star, otimizada para BI e IA.';

@@ -1,4 +1,4 @@
--- Model: fato_flights
+-- Model: fat_flt
 -- Descrição: Fato de voos contendo métricas operacionais e chaves substitutas das dimensões, derivado da OBT.
 
 
@@ -8,7 +8,7 @@
     tags         = ["gold", "fato", "flights"]
 ) }}
 
--- Seleção e preparação dos campos da Silver.
+-- Seleção e preparação dos campos da silver
 WITH src AS (
     SELECT
         flight_id,
@@ -43,40 +43,40 @@ WITH src AS (
     FROM {{ ref('silver_flights') }}
 ),
 
--- Junção com a dimensão de companhias aéreas.
-with_dim_airline AS (
+-- Junção com a dimensão de companhias aéreas
+with_dim_air AS (
     SELECT
         s.*,
         da.airline_id
     FROM src s
-    LEFT JOIN {{ ref('dim_airline') }} da
+    LEFT JOIN {{ ref('dim_air') }} da
         ON s.airline_iata_code = da.airline_iata_code
 ),
 
--- Junção com a dimensão de aeroportos (origem e destino).
-with_dim_airport AS (
+-- Junção com a dimensão de aeroportos (origem e destino)
+with_dim_apt AS (
     SELECT
         s.*,
         ao.airport_id AS origin_airport_id,
         ad.airport_id AS dest_airport_id
-    FROM with_dim_airline s
-    LEFT JOIN {{ ref('dim_airport') }} ao
+    FROM with_dim_air s
+    LEFT JOIN {{ ref('dim_apt') }} ao
         ON s.origin_airport_iata_code = ao.airport_iata_code
-    LEFT JOIN {{ ref('dim_airport') }} ad
+    LEFT JOIN {{ ref('dim_apt') }} ad
         ON s.dest_airport_iata_code = ad.airport_iata_code
 ),
 
--- Junção com a dimensão de datas.
-with_dim_date AS (
+-- Junção com a dimensão de datas
+with_dim_dat AS (
     SELECT
         wda.*,
         dd.full_date
-    FROM with_dim_airport wda
-    LEFT JOIN {{ ref('dim_date') }} dd
+    FROM with_dim_apt wda
+    LEFT JOIN {{ ref('dim_dat') }} dd
         ON wda.flight_date = dd.full_date
 ),
 
--- Projeção final dos campos do fato.
+-- Projeção final dos campos do fato
 final AS (
     SELECT
         flight_id,
@@ -108,7 +108,7 @@ final AS (
         airline_delay,
         late_aircraft_delay,
         weather_delay
-    FROM with_dim_date
+    FROM with_dim_dat
     ORDER BY flight_id
 )
 

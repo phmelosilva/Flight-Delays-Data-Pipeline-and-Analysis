@@ -145,10 +145,11 @@ def pipeline_raw_to_gold():
     # Orquestração
     create_output_dir_task >> raw_to_silver_task
 
-    raw_to_silver_task >> dbt_run_raw_task >> dbt_run_silver_task
+    raw_to_silver_task >> [silver_to_gold_task, dbt_run_raw_task]
 
-    dbt_run_silver_task >> silver_to_gold_task
+    [silver_to_gold_task, dbt_run_raw_task] >> dbt_run_silver_task >> dbt_run_gold_task
 
-    dbt_run_silver_task >> dbt_run_gold_task >> dbt_test_task >> dbt_docs_generate_task
+    dbt_run_gold_task >> dbt_test_task >> dbt_docs_generate_task
+
 
 pipeline_raw_to_gold()

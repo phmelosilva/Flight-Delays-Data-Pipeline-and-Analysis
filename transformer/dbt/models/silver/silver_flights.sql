@@ -81,7 +81,7 @@ times AS (
 
 ),
 
--- Conversão HHMM → timestamp
+-- Conversão HHMM -> timestamp
 ts AS (
 
     SELECT
@@ -207,7 +207,6 @@ joined AS (
 
 -- Ordenação, geração de PK e filtros
 final AS (
-
     SELECT
         row_number() OVER (
             ORDER BY
@@ -217,12 +216,57 @@ final AS (
                 origin_airport_iata_code,
                 dest_airport_iata_code
         )::bigint AS flight_id,
-        *
+
+        flight_year,
+        flight_month,
+        flight_day,
+        flight_day_of_week,
+        flight_date,
+
+        airline_iata_code,
+        airline_name,
+        flight_number,
+        tail_number,
+        origin_airport_iata_code,
+        origin_airport_name,
+        origin_city,
+        origin_state,
+        origin_latitude,
+        origin_longitude,
+        dest_airport_iata_code,
+        dest_airport_name,
+        dest_city,
+        dest_state,
+        dest_latitude,
+        dest_longitude,
+
+        scheduled_departure_ts AS scheduled_departure,
+        departure_time_fixed   AS departure_time,
+        scheduled_arrival_ts   AS scheduled_arrival,
+        arrival_time_adj       AS arrival_time,
+        wheels_off_ts          AS wheels_off,
+        wheels_on_ts           AS wheels_on,
+
+        departure_delay,
+        arrival_delay,
+        taxi_out,
+        taxi_in,
+        air_time,
+        elapsed_time,
+        scheduled_time,
+        distance,
+        is_overnight_flight,
+
+        air_system_delay,
+        security_delay,
+        airline_delay,
+        late_aircraft_delay,
+        weather_delay
+
     FROM joined
     WHERE departure_time_fixed IS NOT NULL
       AND arrival_time_adj    IS NOT NULL
       AND arrival_time_adj > departure_time_fixed
-
 )
 
 SELECT *

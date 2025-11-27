@@ -1,4 +1,4 @@
--- Model: dim_date
+-- Model: dim_dat
 -- Descrição: Dimensão de datas construída a partir da tabela OBT.
 
 
@@ -22,7 +22,7 @@
     "2015-12-25"
 ] %}
 
--- Datas distintas presentes nos voos da Silver
+-- Datas distintas presentes nos voos da silver
 WITH base AS (
     SELECT DISTINCT
         flight_date

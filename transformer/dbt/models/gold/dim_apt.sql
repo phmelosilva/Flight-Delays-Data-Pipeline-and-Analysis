@@ -1,4 +1,4 @@
--- Model: dim_airport
+-- Model: dim_apt
 -- Descrição: Dimensão de aeroportos derivada da tabela OBT.
 
 {{ config(
@@ -8,7 +8,7 @@
 ) }}
 
 
--- Consolidação dos aeroportos de origem e destino a partir da silver_flgihts.
+-- Consolidação dos aeroportos de origem e destino a partir da silver_flights.
 WITH airports_raw AS (
 
     SELECT DISTINCT

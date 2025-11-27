@@ -11,7 +11,7 @@ def _check_unique(df: DataFrame, column: str, name: str) -> None:
     Args:
         df (DataFrame): DataFrame a ser validado.
         column (str): Nome da coluna a ser verificada quanto à unicidade.
-        name (str): Nome lógico do dataset (ex.: 'dim_airline').
+        name (str): Nome lógico do dataset (ex.: 'dim_air').
 
     Raises:
         ValueError: Se forem encontrados valores duplicados na coluna.
@@ -38,7 +38,7 @@ def _check_no_nulls(df: DataFrame, columns: list[str], name: str) -> None:
     Args:
         df (DataFrame): DataFrame a ser validado.
         columns (list[str]): Lista de colunas obrigatórias.
-        name (str): Nome lógico do dataset (ex.: 'fato_flights').
+        name (str): Nome lógico do dataset (ex.: 'fat_flt').
 
     Raises:
         ValueError: Se qualquer coluna obrigatória possuir valores nulos.
@@ -96,15 +96,15 @@ def _check_fk_integrity(df_fact, df_dim, fk_col, dim_col, fact_name, dim_name) -
     )
 
 
-def run_quality_gates_gold(dim_airline, dim_airport, dim_date, fato_flights) -> None:
+def run_quality_gates_gold(dim_air, dim_apt, dim_dat, fat_flt) -> None:
     """
     Executa todas as validações da camada Gold.
 
     Args:
-        dim_airline (DataFrame): Dimensão de companhias aéreas.
-        dim_airport (DataFrame): Dimensão de aeroportos.
-        dim_date (DataFrame): Dimensão de datas.
-        fato_flights (DataFrame): Tabela fato de voos.
+        dim_air (DataFrame): Dimensão de companhias aéreas.
+        dim_apt (DataFrame): Dimensão de aeroportos.
+        dim_dat (DataFrame): Dimensão de datas.
+        fat_flt (DataFrame): Tabela fato de voos.
 
     Raises:
         ValueError: Caso qualquer validação falhe.
@@ -112,37 +112,37 @@ def run_quality_gates_gold(dim_airline, dim_airport, dim_date, fato_flights) -> 
     log.info("[Quality][Gold] Iniciando validações.")
 
     # Cache para melhorar desempenho em múltiplas verificações
-    dim_airline.cache()
-    dim_airport.cache()
-    dim_date.cache()
-    fato_flights.cache()
+    dim_air.cache()
+    dim_apt.cache()
+    dim_dat.cache()
+    fat_flt.cache()
 
-    _check_unique(dim_airline, "airline_iata_code", "dim_airline")
-    _check_unique(dim_airport, "airport_iata_code", "dim_airport")
-    _check_unique(dim_date, "full_date", "dim_date")
-    _check_unique(fato_flights, "flight_id", "fato_flights")
+    _check_unique(dim_air, "airline_iata_code", "dim_air")
+    _check_unique(dim_apt, "airport_iata_code", "dim_apt")
+    _check_unique(dim_dat, "full_date", "dim_dat")
+    _check_unique(fat_flt, "flight_id", "fat_flt")
 
     _check_no_nulls(
-        fato_flights,
+        fat_flt,
         ["airline_id", "origin_airport_id", "dest_airport_id", "full_date"],
-        "fato_flights",
+        "fat_flt",
     )
 
     _check_fk_integrity(
-        fato_flights, dim_airline, "airline_id", "airline_id",
-        "fato_flights", "dim_airline",
+        fat_flt, dim_air, "airline_id", "airline_id",
+        "fat_flt", "dim_air",
     )
     _check_fk_integrity(
-        fato_flights, dim_airport, "origin_airport_id", "airport_id",
-        "fato_flights", "dim_airport",
+        fat_flt, dim_apt, "origin_airport_id", "airport_id",
+        "fat_flt", "dim_apt",
     )
     _check_fk_integrity(
-        fato_flights, dim_airport, "dest_airport_id", "airport_id",
-        "fato_flights", "dim_airport",
+        fat_flt, dim_apt, "dest_airport_id", "airport_id",
+        "fat_flt", "dim_apt",
     )
     _check_fk_integrity(
-        fato_flights, dim_date, "full_date", "full_date",
-        "fato_flights", "dim_date",
+        fat_flt, dim_dat, "full_date", "full_date",
+        "fat_flt", "dim_dat",
     )
 
     log.info("[Quality][Gold] Todas as validações concluídas com sucesso.")

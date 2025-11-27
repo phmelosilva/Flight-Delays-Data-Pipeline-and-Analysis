@@ -83,10 +83,12 @@
 {% test departure_before_arrival(model, departure_col, arrival_col) %}
     SELECT *
     FROM {{ model }}
-    WHERE {{ departure_col }} IS NOT NULL
-      AND {{ arrival_col }}   IS NOT NULL
-      AND {{ departure_col }} >= {{ arrival_col }}
+    WHERE
+        {{ departure_col }} IS NOT NULL
+        AND {{ arrival_col }}   IS NOT NULL
+        AND {{ arrival_col }} <= {{ departure_col }}
 {% endtest %}
+
 
 
 -- Test: origin_dest_different
