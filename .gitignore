@@ -28,4 +28,5 @@ __pycache__/
 transformer/dbt/dbt_packages/
 transformer/dbt/logs/
 transformer/dbt/target/
+transformer/output/
 .vscode
