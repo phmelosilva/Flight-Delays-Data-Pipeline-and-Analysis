@@ -10,6 +10,9 @@
 -- Objetivo ...............: Consultas para alimentar o Dashboard de Performance de Voos.
 -- Tabela Principal .......: gold.fat_flt
 --
+-- Últimas alterações:
+--      27/11/2025 => Adiciona mais 4 consultas para análises adicionais;
+--
 -- ------------------------------------------------------------------------------------------------------------------------
 
 -- Definir o schema padrão para a sessão
@@ -27,7 +30,7 @@ SELECT
     AVG(f.arrival_delay) AS media_atraso_chegada,
     
     -- Métrica 3: Porcentagem de Voos com Atraso
-    (SUM(CASE WHEN f.arrival_delay > 0 THEN 1 ELSE 0 END) / COUNT(f.flight_id)::float) * 100 AS pct_voos_com_atraso
+    (SUM(CASE WHEN f.arrival_delay > 0 THEN 1 ELSE 0 END) / NULLIF(COUNT(f.flight_id), 0)::float) * 100 AS pct_voos_com_atraso
 FROM
     fat_flt AS f;
 
@@ -80,7 +83,7 @@ SELECT
 FROM
     fat_flt AS f
 JOIN
-    dim_dat AS d ON f.date_id = d.date_id
+    dim_dat AS d ON f.full_date = d.full_date
 GROUP BY
     d.day_of_week
 ORDER BY
@@ -97,7 +100,7 @@ SELECT
 FROM
     fat_flt AS f
 JOIN
-    dim_dat AS d ON f.date_id = d.date_id
+    dim_dat AS d ON f.full_date = d.full_date
 GROUP BY
     d.month
 ORDER BY
@@ -118,3 +121,92 @@ FROM
     fat_flt AS f
 WHERE
     f.arrival_delay > 0;
+
+
+-- =======================================================================================================================
+-- CONSULTA 7: ANÁLISE DE ROTAS CRÍTICAS (TOP 10 PIORES ROTAS)
+-- Objetivo: Identificar quais conexões (Origem -> Destino) sofrem mais atrasos.
+-- =======================================================================================================================
+SELECT 
+    origem.airport_iata_code AS origem,
+    destino.airport_iata_code AS destino,
+    COUNT(f.flight_id) AS total_voos,
+    AVG(f.arrival_delay) AS media_atraso_chegada
+FROM 
+    fat_flt AS f
+JOIN 
+    dim_apt AS origem ON f.origin_airport_id = origem.airport_id
+JOIN 
+    dim_apt AS destino ON f.dest_airport_id = destino.airport_id
+GROUP BY 
+    origem.airport_iata_code, 
+    destino.airport_iata_code
+HAVING 
+    COUNT(f.flight_id) > 50
+ORDER BY 
+    media_atraso_chegada DESC
+LIMIT 10;
+
+
+-- =======================================================================================================================
+-- CONSULTA 8: ATRASOS POR PERÍODO DO DIA (MADRUGADA, MANHÃ, TARDE, NOITE)
+-- Objetivo: Validar se o atraso acumula ao longo do dia.
+-- =======================================================================================================================
+SELECT 
+    CASE 
+        WHEN EXTRACT(HOUR FROM f.scheduled_departure) BETWEEN 0 AND 5 THEN 'Madrugada'
+        WHEN EXTRACT(HOUR FROM f.scheduled_departure) BETWEEN 6 AND 11 THEN 'Manhã'
+        WHEN EXTRACT(HOUR FROM f.scheduled_departure) BETWEEN 12 AND 17 THEN 'Tarde'
+        WHEN EXTRACT(HOUR FROM f.scheduled_departure) >= 18 THEN 'Noite'
+    END AS periodo_dia,
+    COUNT(f.flight_id) AS total_voos,
+    AVG(f.departure_delay) AS media_atraso_partida,
+    AVG(f.arrival_delay) AS media_atraso_chegada
+FROM 
+    fat_flt AS f
+GROUP BY 
+    1 -- Agrupa pela primeira coluna calculada (periodo_dia)
+ORDER BY 
+    media_atraso_chegada ASC;
+
+
+-- =======================================================================================================================
+-- CONSULTA 9: PERFORMANCE POR DURAÇÃO DE VOO
+-- Objetivo: Analisar se voos mais longos tendem a recuperar ou aumentar o atraso.
+-- =======================================================================================================================
+SELECT 
+    CASE 
+        WHEN f.elapsed_time <= 90 THEN 'Curta Duração'
+        WHEN f.elapsed_time > 90 AND f.elapsed_time <= 240 THEN 'Média Duração'
+        WHEN f.elapsed_time > 240 THEN 'Longa Duração'
+        ELSE 'Desconhecido'
+    END AS categoria_duracao,
+    COUNT(f.flight_id) AS total_voos,
+    AVG(f.arrival_delay) AS media_atraso_chegada
+FROM 
+    fat_flt AS f
+WHERE 
+    f.elapsed_time IS NOT NULL
+GROUP BY 
+    1
+ORDER BY 
+    media_atraso_chegada DESC;
+
+
+-- =======================================================================================================================
+-- CONSULTA 10: MAPA DE CALOR POR ESTADO DE ORIGEM
+-- Objetivo: Alimentar o mapa de bolhas.
+-- =======================================================================================================================
+SELECT 
+    ap.state_code AS estado_origem, -- Usando a sigla do estado que está na dimensão
+    COUNT(f.flight_id) AS volume_voos,
+    AVG(f.arrival_delay) AS media_atraso_chegada,
+    SUM(f.arrival_delay) AS total_minutos_atraso
+FROM 
+    fat_flt AS f
+JOIN
+    dim_apt AS ap ON f.origin_airport_id = ap.airport_id
+GROUP BY 
+    ap.state_code
+ORDER BY 
+    volume_voos DESC;
