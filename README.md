@@ -2,7 +2,7 @@
 
 Este projeto implementa um pipeline completo de engenharia de dados desenvolvido para a disciplina de **Sistemas de Bancos de Dados 2**, demonstrando a construção de uma solução de dados de ponta a ponta, desde a ingestão de arquivos brutos até a criação de um modelo analítico em formato dimensional. Utilizando os [dados de atrasos de voos dos EUA (2015)](https://www.kaggle.com/datasets/usdot/flight-delays), provenientes do Kaggle, o projeto adota a **Medallion Architecture (Bronze, Silver, Gold)** para estruturar, transformar e validar dados de forma incremental e reproduzível.
 
-A solução simula um ambiente realista de produção, incluindo orquestração com Apache Airflow, processamento distribuído com PySpark, execução parametrizada via Papermill, modelagem analítica e um Data Warehouse em PostgreSQL.
+A solução simula um ambiente realista de produção, incluindo orquestração com Apache Airflow, processamento distribuído com PySpark, execução parametrizada via Papermill, transformações com o dbt, modelagem analítica e um Data Warehouse em PostgreSQL.
 
 ---
 
@@ -10,10 +10,10 @@ A solução simula um ambiente realista de produção, incluindo orquestração 
 
 - **Orquestração:** Apache Airflow;
 - **Conteinerização:** Docker & Docker Compose;
-- **Armazenamento:** CSV e Parquet;
+- **Armazenamento:** Csv e Parquet;
 - **Banco de Dados (Metadados do Airflow e Data Warehouse):** PostgreSQL;
 - **Análise e Processamento de Dados:** dbt, Jupyter Notebook, Matplotlib, Pandas, Papermill, PySpark, Seaborn e Scikit-learn;
-- **Visualização:** Microsoft PowerBI e Tableau;
+- **Visualização:** Microsoft PowerBI;
 - **Linguagens:** Python, SQL & Bash.
 
 ---
@@ -22,7 +22,7 @@ A solução simula um ambiente realista de produção, incluindo orquestração 
 
 A pipeline segue a arquitetura Medallion:
 
-- **Stage:** Área inicial contendo os arquivos CSV brutos, utilizados diretamente como input da camada Bronze (evita redownloads dos arquivos pesados);
+- **Stage:** Área inicial contendo os arquivos csv brutos, utilizados diretamente como input da camada Bronze (evita redownloads dos arquivos pesados);
 - **Bronze:** Conversão para Parquet e persistência final dos arquivos brutos;
 - **Silver:** Limpeza, normalização, tratamento de tipos, padronização de colunas e validações de qualidade (quality gates);
 - **Gold:** Modelagem analítica em esquema estrela, com criação de dimensões e fatos, otimizada para uso em dashboards e consultas de alto desempenho.
@@ -35,46 +35,49 @@ A pipeline segue a arquitetura Medallion:
 .
 ├── .dockerignore
 ├── .env.example
+├── .gitattributes
+├── .github
 ├── .gitignore
 ├── README.md
-│
 ├── airflow
 │   └── dags
-│       └── pl_stage_to_gold.py
+│       └── pl_raw_to_gold.py
 │
 ├── data-layer
-│   ├── bronze
-│   │   ├── 000_create_schemas.sql
-│   │   ├── bronze_analysis.ipynb
-│   │   ├── bronze_data_dictionary.md
-│   │   ├── bronze_mer_der.pdf
-│   │   └── metadados_bronze.md
 │   ├── gold
-│   │   ├── 002_create_table_gold.sql
-│   │   ├── Definicao_do_Dashboard.pdf
-│   │   ├── gold_dashboard_queries.sql
+│   │   ├── gold_consultas.sql
 │   │   ├── gold_data_dictionary.md
+│   │   ├── gold_ddl.sql
+│   │   ├── gold_definicao_dashboard.pdf
 │   │   ├── gold_mer_der_dld.pdf
-│   │   └── mimemonicos_Data_Warehouse.md
-│   ├── silver
-│   │   ├── 001_create_table_silver.sql
-│   │   ├── silver_analysis.ipynb
-│   │   ├── silver_dashboard_queries.sql
-│   │   ├── silver_data_dictionary.md
-│   │   └── silver_mer_der.pdf
-│   └── stage
-│       ├── airlines.csv
-│       ├── airports.csv
-│       ├── flights_part_01.csv
-│       ├── flights_part_02.csv
-│       ├── flights_part_03.csv
-│       ├── flights_part_04.csv
-│       ├── flights_part_05.csv
-│       ├── flights_part_06.csv
-│       ├── flights_part_07.csv
-│       ├── flights_part_08.csv
-│       ├── flights_part_09.csv
-│       └── flights_part_10.csv
+│   │   └── mnemonico.md
+│   │
+│   ├── raw
+│   │   ├── raw_analysis.ipynb
+│   │   ├── raw_data_dictionary.md
+│   │   ├── raw_ddl.sql
+│   │   ├── raw_mer_der_dld.pdf
+│   │   ├── raw_metadados.md
+│   │   └── stage
+│   │       ├── airlines.csv
+│   │       ├── airports.csv
+│   │       ├── flights_part_01.csv
+│   │       ├── flights_part_02.csv
+│   │       ├── flights_part_03.csv
+│   │       ├── flights_part_04.csv
+│   │       ├── flights_part_05.csv
+│   │       ├── flights_part_06.csv
+│   │       ├── flights_part_07.csv
+│   │       ├── flights_part_08.csv
+│   │       ├── flights_part_09.csv
+│   │       └── flights_part_10.csv
+│   │
+│   └── silver
+│       ├── silver_analysis.ipynb
+│       ├── silver_consultas.sql
+│       ├── silver_data_dictionary.md
+│       ├── silver_ddl.sql
+│       └── silver_mer_der_dld.pdf
 │
 ├── docker
 │   ├── airflow
@@ -85,14 +88,37 @@ A pipeline segue a arquitetura Medallion:
 ├── docker-compose.yaml
 ├── pyproject.toml
 └── transformer
-    ├── 01_etl_stage_to_bronze.ipynb
-    ├── 02_etl_bronze_to_silver.ipynb
-    ├── 03_etl_silver_to_gold.ipynb
     ├── __init__.py
-    │
     ├── dbt
+    │   ├── .dbt
+    │   │   └── profiles.yml
     │   ├── dbt_project.yml
-    │   └── profiles.yml
+    │   │
+    │   ├── macros
+    │   │   ├── generate_schema_name.sql
+    │   │   ├── parse_int.sql
+    │   │   ├── tests
+    │   │   │   └── quality_gates.sql
+    │   │   └── time_utils.sql
+    │   │
+    │   └── models
+    │       ├── gold
+    │       │   ├── dim_air.sql
+    │       │   ├── dim_apt.sql
+    │       │   ├── dim_dat.sql
+    │       │   ├── fat_flt.sql
+    │       │   └── gold_sources.yml
+    │       ├── raw
+    │       │   ├── raw_airlines.sql
+    │       │   ├── raw_airports.sql
+    │       │   ├── raw_flights.sql
+    │       │   └── raw_sources.yml
+    │       └── silver
+    │           ├── silver_flights.sql
+    │           └── silver_sources.yml
+    │
+    ├── etl_raw_to_silver.ipynb
+    ├── etl_silver_to_gold.ipynb
     │
     └── utils
         ├── __init__.py
@@ -101,8 +127,8 @@ A pipeline segue a arquitetura Medallion:
         ├── logger.py
         ├── metadata_collector.py
         ├── postgre_helpers.py
-        ├── quality_gates_bronze.py
         ├── quality_gates_gold.py
+        ├── quality_gates_raw.py
         ├── quality_gates_silver_aggregated.py
         ├── quality_gates_silver_base.py
         ├── quality_gates_silver_flights.py
@@ -116,22 +142,24 @@ A pipeline segue a arquitetura Medallion:
 A orquestração é realizada pela DAG:
 
 ```
-pl_stage_to_gold.py
+pl_raw_to_gold.py
 ```
 
-Ela executa, de forma sequencial, três notebooks ETL utilizando Papermill dentro do container `data_transformer`.
+Ela executa, de forma sequencial, dois notebooks ETL utilizando Papermill dentro do container `data_transformer` e quartro tarefas relativas ao dbt dentro do container `dbt_runner`.
 
 ### Banco de Dados (DW)
 
 O PostgreSQL inicia automaticamente com:
 
-- Schema `dbt`;
+- Schema `dbt_raw`;
+- Schema `dbt_silver`;
+- Schema `dbt_gold`;
 - Schema `silver`;
 - Schema `gold`.
 
 Os scripts SQL de criação de tabelas estão localizados na `data-layer`.
 
-A carga das tabelas da `silver` e `gold` é realizada diretamente pelos notebooks ETL.
+As cargas das tabelas da `silver_*`, `gold_*` e do `dbt_*` são realizadas diretamente pelos notebooks ETL e com `BashOperator` do Airflow.
 
 ### Qualidade de Dados
 
@@ -220,9 +248,9 @@ A primeira execução pode levar alguns minutos.
 
 ### 6. Execute a pipeline
 
-1. No Airflow, localize a DAG `pl_stage_to_gold`.
+1. No Airflow, localize a DAG `pl_raw_to_gold`.
 2. Ative a DAG.
-3. Execute manualmente ou configure um schedule.
+3. Execute manualmente a dag.
 
 Os notebooks executados via Papermill serão armazenados em:
 
