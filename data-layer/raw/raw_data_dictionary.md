@@ -1,14 +1,14 @@
-### Dicionário de Dados – Bronze
+# Dicionário de Dados – Bronze
 
-#### **Tabela: FLIGHT**
+## **Entidade: flight**
 
-| Coluna              | Tipo    | Descrição                                                             |
+| Atributo            | Tipo    | Descrição                                                             |
 | ------------------- | ------- | --------------------------------------------------------------------- |
 | year                | int     | Ano do voo.                                                           |
-| month               | int     | Mês do voo (1 a 12).                                                  |
+| month               | int     | Mês do voo.                                                           |
 | day                 | int     | Dia do mês.                                                           |
 | day_of_week         | int     | Dia da semana (1=Segunda, 7=Domingo).                                 |
-| airline             | varchar | Código da companhia aérea (IATA).                                     |
+| airline             | varchar | Código IATA da companhia aérea.                                       |
 | flight_number       | varchar | Número do voo.                                                        |
 | tail_number         | varchar | Identificação da aeronave.                                            |
 | origin_airport      | varchar | Código IATA do aeroporto de origem.                                   |
@@ -36,16 +36,16 @@
 | late_aircraft_delay | int     | Atraso causado por chegada tardia de outra aeronave (minutos).        |
 | weather_delay       | int     | Atraso devido ao clima (minutos).                                     |
 
-#### **Tabela: AIRLINE**
+## **Entidade: airline**
 
-| Coluna    | Tipo    | Descrição                       |
+| Atributo  | Tipo    | Descrição                       |
 | --------- | ------- | ------------------------------- |
 | iata_code | varchar | Código IATA da companhia aérea. |
 | airline   | varchar | Nome da companhia aérea.        |
 
-#### **Tabela: AIRPORT**
+## **Entidade: airport**
 
-| Coluna    | Tipo    | Descrição                                |
+| Atributo  | Tipo    | Descrição                                |
 | --------- | ------- | ---------------------------------------- |
 | iata_code | varchar | Código IATA do aeroporto.                |
 | airport   | varchar | Nome do aeroporto.                       |
@@ -54,10 +54,3 @@
 | country   | varchar | País onde o aeroporto está localizado.   |
 | latitude  | decimal | Latitude geográfica.                     |
 | longitude | decimal | Longitude geográfica.                    |
-
-## Histórico de Versões
-
-| Versão | Data       | Descrição                                           | Autor(es)                                        | Revisor(es)                                      |
-| ------ | ---------- | --------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
-| `1.0`  | 21/09/2025 | Criação inicial do README com dicionário de dados.  | [Júlia Takaki](https://github.com/juliatakaki)   | [Matheus Henrique](https://github.com/mathonaut) |
-| `1.1`  | 24/09/2025 | Ajustes no README com explicação sobre camada Gold. | [Pedro Henrique](https://github.com/phmelosilva) | [Matheus Henrique](https://github.com/mathonaut) |

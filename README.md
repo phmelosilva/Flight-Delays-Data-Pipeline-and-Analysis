@@ -259,12 +259,3 @@ transformer/output/<data_da_execução>/
 ```
 
 ---
-
-## Histórico de Versões
-
-| Versão | Data       | Descrição                                                  | Autor(es)                                        |
-| ------ | ---------- | ---------------------------------------------------------- | ------------------------------------------------ |
-| `1.0`  | 21/09/2025 | Criação inicial do README com dicionário de dados.         | [Júlia Takaki](https://github.com/juliatakaki)   |
-| `1.1`  | 24/09/2025 | Ajustes no README com explicação sobre camada Gold.        | [Pedro Henrique](https://github.com/phmelosilva) |
-| `1.2`  | 25/09/2025 | Reestrutura o README para refletir as mudanças no projeto. | [Matheus Henrique](https://github.com/mathonaut) |
-| `1.3`  | 17/11/2025 | Atualiza com a nova arquitetura.                           | [Matheus Henrique](https://github.com/mathonaut) |

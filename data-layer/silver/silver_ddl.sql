@@ -1,40 +1,35 @@
--- -----------------------------------------------------------------------------------------------------------------------
+-- -------------------------------------------------------------------------------------------------
 --
 --                                        SCRIPT DE CRIAÇÃO (DDL)                                                
--- 
--- Data Criação ...........: 09/10/2025
--- Autor(es) ..............: Júlia Takaki, Matheus Henrique Dos Santos
+--
+-- Data Criação ...........: 01/12/2025
+-- Autor(es) ..............: Matheus Henrique Dos Santos
 -- Banco de Dados .........: PostgreSQL 16
 -- Banco de Dados(nome) ...: dw
 -- 
 -- Últimas alterações:
---      07/11/2025 => Altera colunas com datas para TIMESTAMP;
---                 => Adiciona coluna "is_overnight_flight";
---                 => Corrige tipo do atributo "flight_id" e padroniza DDL;
---
---      09/11/2025 => Corrige tipo do atributo "flight_id" e padroniza DDL;
 --
 -- PROJETO => 05 Base de Dados
 --         => 13 Tabelas
 --         => 03 Views
 --
--- ------------------------------------------------------------------------------------------------------------------------
+-- -------------------------------------------------------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS silver;
 SET search_path TO silver;
 
 
 CREATE TABLE IF NOT EXISTS silver_flights (
-    flight_id BIGINT,
+    flight_id INTEGER,
     flight_year SMALLINT NOT NULL,
     flight_month SMALLINT NOT NULL,
     flight_day SMALLINT NOT NULL,
     flight_day_of_week SMALLINT NOT NULL,
     flight_date DATE NOT NULL,
+    flight_number INTEGER NOT NULL,
 
     airline_iata_code VARCHAR(3) NOT NULL,
     airline_name VARCHAR(100) NOT NULL,
 
-    flight_number INTEGER NOT NULL,
     tail_number VARCHAR(10),
 
     origin_airport_iata_code VARCHAR(3) NOT NULL,
@@ -58,8 +53,6 @@ CREATE TABLE IF NOT EXISTS silver_flights (
     wheels_off TIMESTAMP,
     wheels_on TIMESTAMP,
 
-    departure_delay DOUBLE PRECISION,
-    arrival_delay DOUBLE PRECISION,
     taxi_out DOUBLE PRECISION,
     taxi_in DOUBLE PRECISION,
     air_time DOUBLE PRECISION,
@@ -67,25 +60,27 @@ CREATE TABLE IF NOT EXISTS silver_flights (
     scheduled_time DOUBLE PRECISION,
     distance DOUBLE PRECISION,
 
-    is_overnight_flight BOOLEAN NOT NULL DEFAULT FALSE,
-
+    departure_delay DOUBLE PRECISION DEFAULT 0,
+    arrival_delay DOUBLE PRECISION DEFAULT 0,
     air_system_delay DOUBLE PRECISION DEFAULT 0,
     security_delay DOUBLE PRECISION DEFAULT 0,
     airline_delay DOUBLE PRECISION DEFAULT 0,
     late_aircraft_delay DOUBLE PRECISION DEFAULT 0,
-    weather_delay DOUBLE PRECISION DEFAULT 0
+    weather_delay DOUBLE PRECISION DEFAULT 0,
+
+    is_overnight_flight BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 ALTER TABLE silver_flights ADD CONSTRAINT pk_silver_flights 
     PRIMARY KEY (flight_id);
 
 CREATE INDEX IF NOT EXISTS idx_silver_flights_date 
-    ON silver_flights (flight_date);
+    ON silver_flights(flight_date);
 CREATE INDEX IF NOT EXISTS idx_silver_flights_airline 
-    ON silver_flights (airline_iata_code);
+    ON silver_flights(airline_iata_code);
 CREATE INDEX IF NOT EXISTS idx_silver_flights_origin_dest 
-    ON silver_flights (origin_airport_iata_code, dest_airport_iata_code);
+    ON silver_flights(origin_airport_iata_code, dest_airport_iata_code);
 CREATE INDEX IF NOT EXISTS idx_silver_flights_times 
-    ON silver_flights (departure_time, arrival_time);
+    ON silver_flights(departure_time, arrival_time);
 
 COMMENT ON SCHEMA silver IS 'Modelagem OBT para a camada silver.';

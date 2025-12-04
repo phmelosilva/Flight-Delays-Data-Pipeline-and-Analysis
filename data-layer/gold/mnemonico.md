@@ -1,105 +1,62 @@
-# Arquivo de Mnemônico e Dicionário de Dados (Camada Gold)
+# Mnemônicos
 
-Este documento define os padrões de nomenclatura e o significado das colunas utilizadas no Data Warehouse (camada Gold) do projeto, conforme definido no DDL `gold_ddl.sql`.
+Este documento é um apêndice do dicionário de dados e define os padrões de nomenclatura e o significado dos atributos utilizadas no Data Warehouse do projeto.
 
-## 1. Padrões de Nomenclatura (mnemônico)
+## 1. Padrões de Nomenclatura
 
-Usamos um conjunto de prefixos padronizados para identificar rapidamente o propósito de cada tabela e objeto no banco de dados.
+Usamos um conjunto de prefixos padronizados para identificar rapidamente o propósito de cada Entidade e objeto no banco de dados.
 
-| Prefixo/Sufixo | Significado          | Descrição                                                                                              |
-| :------------- | :------------------- | :----------------------------------------------------------------------------------------------------- |
-| `dim_`         | Dimensão (Dimension) | Prefixo para tabelas de dimensão. Elas contêm o "quem, o quê, onde, quando" (o contexto).              |
-| `fat_`         | Fato (Fact)          | Prefixo para tabelas fato. Elas contêm os eventos, métricas e valores numéricos.                       |
-| `_id`          | Identificador        | Sufixo para chaves primárias e estrangeiras. Substitui o mnemônico `SRK` (Surrogate Key) por clareza.  |
-| `pk_`          | Primary Key          | Prefixo usado na definição de constraints de Chave Primária.                                           |
-| `fk_`          | Foreign Key          | Prefixo usado na definição de constraints de Chave Estrangeira (ligações entre fato e dimensões).      |
-| `idx_`         | Índice (Index)       | Prefixo para índices, que são usados para otimizar a performance de consultas (`SELECT`).              |
-| `_iata_code`   | IATA Code            | Sufixo para colunas que armazenam os códigos de negócio (ex: `LA` para LATAM, `JFK` para o aeroporto). |
-
----
-
-## 2. Dicionário de Tabelas (Star Schema)
-
-Nosso Data Warehouse segue um **Star Schema**, composto por uma tabela Fato central (`fat_flt`) e três dimensões (`dim_apt`, `dim_air`, `dim_dat`).
-
-### 2.1. Tabelas de Dimensão
-
-#### `dim_apt`
-
-Armazena informações descritivas e de localização de cada aeroporto.
-
-| Coluna                   | Descrição                                                | Tipo de Dado       | Chave |
-| :----------------------- | :------------------------------------------------------- | :----------------- | :---- |
-| `airport_id`             | **Chave Surrogada (SRK)** da dimensão aeroporto.         | `SERIAL` (Inteiro) | PK    |
-| `airport_iata_code`      | Chave de negócio (código IATA de 3 letras) do aeroporto. | `VARCHAR(3)`       |       |
-| `airport_name`           | Nome completo do aeroporto.                              | `VARCHAR(100)`     |       |
-| `state_code`             | Sigla do estado do aeroporto (ex: 'NY').                 | `VARCHAR(3)`       |       |
-| `state_name`             | Nome do estado.                                          | `VARCHAR(100)`     |       |
-| `city_name`              | Nome da cidade onde o aeroporto está localizado.         | `VARCHAR(100)`     |       |
-| `latitude` / `longitude` | Coordenadas geográficas para uso em mapas.               | `DOUBLE PRECISION` |       |
-
-#### `dim_air`
-
-Armazena informações descritivas de cada companhia aérea.
-
-| Coluna              | Descrição                                                     | Tipo de Dado       | Chave |
-| :------------------ | :------------------------------------------------------------ | :----------------- | :---- |
-| `airline_id`        | **Chave Surrogada (SRK)** da dimensão companhia aérea.        | `SERIAL` (Inteiro) | PK    |
-| `airline_iata_code` | Chave de negócio (código IATA de 2 ou 3 letras) da companhia. | `VARCHAR(3)`       |       |
-| `airline_name`      | Nome completo da companhia aérea.                             | `VARCHAR(100)`     |       |
-
-#### `dim_dat`
-
-Armazena atributos de tempo para permitir análises sazonais. Esta é uma dimensão padrão em qualquer DW.
-
-| Coluna        | Descrição                                      | Tipo de Dado       | Chave |
-| :------------ | :--------------------------------------------- | :----------------- | :---- |
-| `date_id`     | **Chave Surrogada (SRK)** da dimensão de data. | `SERIAL` (Inteiro) | PK    |
-| `full_date`   | A data completa (ex: '2015-01-01').            | `DATE`             |       |
-| `year`        | Ano (ex: 2015).                                | `SMALLINT`         |       |
-| `month`       | Mês (1-12).                                    | `SMALLINT`         |       |
-| `day`         | Dia (1-31).                                    | `SMALLINT`         |       |
-| `day_of_week` | Dia da semana (ex: 0=Domingo, 1=Segunda).      | `SMALLINT`         |       |
-| `quarter`     | Trimestre do ano (1-4).                        | `SMALLINT`         |       |
-| `is_holiday`  | Indicador (True/False) se a data é um feriado. | `BOOLEAN`          |       |
+| Prefixo/Sufixo | Significado       | Descrição                                                                  |
+| :------------- | :---------------- | :------------------------------------------------------------------------- |
+| `dim_`         | Dimensão          | Prefixo para Entidades de dimensão.                                        |
+| `fat_`         | Fato              | Prefixo para Entidades fato.                                               |
+| `srk_`         | Identificador     | Prefixo para chaves primárias e estrangeiras (na fato).                    |
+| `pk_`          | Chave Primária    | Prefixo usado na definição de constraints de chave primária.               |
+| `fk_`          | Chave Estrangeira | Prefixo usado na definição de constraints de chave estrangeira.            |
+| `idx_`         | Índice            | Prefixo para índices, utilizados para otimizar a performance de consultas. |
+| `_iata`        | IATA Code         | Sufixo para Atributos que armazenam os códigos no padrão da IATA.          |
 
 ---
 
-### 2.2. Tabela Fato
+## 2. Nomenclaturas e Significados
 
-#### `fat_flt`
-
-Tabela central que armazena os eventos (voos) e suas métricas (medidas) numéricas.
-
-| Coluna                | Descrição                                                                          | Tipo de Dado       | Chave |
-| :-------------------- | :--------------------------------------------------------------------------------- | :----------------- | :---- |
-| **Chaves (FKs)**      |                                                                                    |                    |       |
-| `flight_id`           | Identificador único do voo (chave primária da fato).                               | `INTEGER`          | PK    |
-| `date_id`             | Chave estrangeira que aponta para `dim_date.date_id`.                              | `INTEGER`          | FK    |
-| `airline_id`          | Chave estrangeira que aponta para `dim_airline.airline_id`.                        | `INTEGER`          | FK    |
-| `origin_airport_id`   | Chave estrangeira que aponta para `dim_airport.airport_id` (Aeroporto de Origem).  | `INTEGER`          | FK    |
-| `dest_airport_id`     | Chave estrangeira que aponta para `dim_airport.airport_id` (Aeroporto de Destino). | `INTEGER`          | FK    |
-| **Medidas (Tempos)**  |                                                                                    |                    |       |
-| `scheduled_departure` | Horário agendado da partida.                                                       | `DOUBLE PRECISION` |       |
-| `departure_time`      | Horário real da partida.                                                           | `DOUBLE PRECISION` |       |
-| `scheduled_arrival`   | Horário agendado da chegada.                                                       | `DOUBLE PRECISION` |       |
-| `arrival_time`        | Horário real da chegada.                                                           | `DOUBLE PRECISION` |       |
-| `air_time`            | Tempo total em que o avião esteve no ar.                                           | `DOUBLE PRECISION` |       |
-| `elapsed_time`        | Tempo total do voo (de portão a portão).                                           | `DOUBLE PRECISION` |       |
-| `scheduled_time`      | Tempo de voo agendado (de portão a portão).                                        | `DOUBLE PRECISION` |       |
-| `distance`            | Distância do voo.                                                                  | `DOUBLE PRECISION` |       |
-| **Medidas (Atrasos)** |                                                                                    |                    |       |
-| `departure_delay`     | Atraso na partida (em minutos).                                                    | `DOUBLE PRECISION` |       |
-| `arrival_delay`       | Atraso na chegada (em minutos).                                                    | `DOUBLE PRECISION` |       |
-| `air_system_delay`    | Atraso causado pelo sistema aéreo (em minutos).                                    | `DOUBLE PRECISION` |       |
-| `security_delay`      | Atraso causado pela segurança (em minutos).                                        | `DOUBLE PRECISION` |       |
-| `airline_delay`       | Atraso causado pela companhia aérea (em minutos).                                  | `DOUBLE PRECISION` |       |
-| `late_aircraft_delay` | Atraso causado por aeronave atrasada (em minutos).                                 | `DOUBLE PRECISION` |       |
-| `weather_delay`       | Atraso causado por condições climáticas (em minutos).                              | `DOUBLE PRECISION` |       |
-
-## Histórico de Versões
-
-| Versão | Data       | Descrição                                                   | Autor(es)                                        | Revisor(es)                                      |
-| ------ | ---------- | ----------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
-| `1.0`  | 07/11/2025 | Criação inicial do arquivo de mimemônicos do DataWarehouse. | [Pedro Henrique](https://github.com/phmelosilva) | [Joao Schmitz](https://github.com/joaoschmitz)   |
-| `1.1`  | 26/11/2025 | Corrige nomenclaturas.                                      | [Matheus Henrique](https://github.com/mathonaut) | [Pedro Henrique](https://github.com/phmelosilva) |
+| Atributo     | Descrição                                                 |
+| :----------- | :-------------------------------------------------------- |
+| `srk_air`    | Chave primária gerada para dimensão companhia aérea.      |
+| `air_iata`   | Código IATA da companhia aérea.                           |
+| `air_name`   | Nome completo da companhia aérea.                         |
+| `srk_apt`    | Chave primária gerada para dimensão aeroporto.            |
+| `apt_iata`   | Código IATA do aeroporto.                                 |
+| `apt_name`   | Nome completo do aeroporto.                               |
+| `st_cd`      | Sigla do estado do aeroporto (ex: 'NY').                  |
+| `st_name`    | Nome do estado.                                           |
+| `cty_name`   | Nome da cidade onde o aeroporto está localizado.          |
+| `lat_val`    | Latitude na qual o aeroporto de localiza.                 |
+| `lon_val`    | Longitude na qual o aeroporto de localiza.                |
+| `srk_dat`    | Chave primária gerada para dimensão de data.              |
+| `full_date`  | A data completa (ex: '2015-01-01').                       |
+| `yr`         | Ano (ex: 2015).                                           |
+| `mm`         | Mês (1-12).                                               |
+| `dd`         | Dia (1-31).                                               |
+| `dow`        | Dia da semana (0=Domingo).                                |
+| `qtr`        | Trimestre do ano (1-4).                                   |
+| `is_hol`     | Indicador se a data é um feriado.                         |
+| `srk_flt`    | Chave primária gerada para a fato de voos.                |
+| `srk_ori`    | Chave estrangeira que aponta para o aeroporto de origem.  |
+| `srk_dst`    | Chave estrangeira que aponta para o aeroporto de destino. |
+| `sch_dep`    | Horário agendado da partida.                              |
+| `dep_time`   | Horário real da partida.                                  |
+| `sch_arr`    | Horário agendado da chegada.                              |
+| `arr_time`   | Horário real da chegada.                                  |
+| `dist_val`   | Distância do voo.                                         |
+| `air_time`   | Tempo total em que o avião esteve no ar.                  |
+| `elp_time`   | Tempo total do voo (de portão a portão).                  |
+| `sch_time`   | Tempo de voo agendado (de portão a portão).               |
+| `dep_dly`    | Atraso na partida (em minutos).                           |
+| `arr_dly`    | Atraso na chegada (em minutos).                           |
+| `sys_dly`    | Atraso causado pelo sistema aéreo (em minutos).           |
+| `sec_dly`    | Atraso causado pela segurança (em minutos).               |
+| `air_dly`    | Atraso causado pela companhia aérea (em minutos).         |
+| `acft_dly`   | Atraso causado por aeronave atrasada (em minutos).        |
+| `wx_dly`     | Atraso causado por condições climáticas (em minutos).     |
+| `is_ovn_flt` | Indica se um voo atravesou o dia.                         |
