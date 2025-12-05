@@ -2,8 +2,8 @@
 --
 --                                        SCRIPT DE CRIAÇÃO (DDL)                                                
 -- 
--- Data Criação ...........: 09/10/2025
--- Autor(es) ..............: Júlia Takaki, Matheus Henrique Dos Santos
+-- Data Criação ...........: 01/12/2025
+-- Autor(es) ..............: Matheus Henrique Dos Santos
 -- Banco de Dados .........: PostgreSQL 16
 -- Banco de Dados(nome) ...: dw
 -- 
@@ -17,8 +17,6 @@
 CREATE SCHEMA IF NOT EXISTS dbt_raw;
 CREATE SCHEMA IF NOT EXISTS dbt_silver;
 CREATE SCHEMA IF NOT EXISTS dbt_gold;
-CREATE SCHEMA IF NOT EXISTS silver;
-CREATE SCHEMA IF NOT EXISTS gold;
 SET search_path TO dbt_raw;
 
 

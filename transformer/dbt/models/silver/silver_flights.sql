@@ -247,21 +247,22 @@ final AS (
         wheels_off_ts          AS wheels_off,
         wheels_on_ts           AS wheels_on,
 
-        departure_delay,
-        arrival_delay,
         taxi_out,
         taxi_in,
         air_time,
         elapsed_time,
         scheduled_time,
         distance,
-        is_overnight_flight,
 
+        departure_delay,
+        arrival_delay,
         air_system_delay,
         security_delay,
         airline_delay,
         late_aircraft_delay,
         weather_delay
+
+        is_overnight_flight,
 
     FROM joined
     WHERE departure_time_fixed IS NOT NULL

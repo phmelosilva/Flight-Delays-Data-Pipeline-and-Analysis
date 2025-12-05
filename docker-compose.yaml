@@ -5,7 +5,7 @@
 # file provided by the Apache Airflow project. It has been adapted
 # to suit the specific requirements of the foloowing project:
 #
-#   https://github.com/phmelosilva/Flight-Delays-Data-Pipeline-and-Analysis/
+#   https://github.com/mathonaut/flight-delays-data-pipeline-and-analysis
 #
 # The original Apache License 2.0 notice is retained below.
 # ---
